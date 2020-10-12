@@ -127,6 +127,30 @@
                  (trie-join p m s q n t)))))))
     (merge trie0 trie1)))
 
+;; Construct a branch only if the subtrees s and t are non-empty.
+(define (smart-branch p m s t)
+  (cond ((not s) t)
+        ((not t) s)
+        (else (branch p m s t))))
+
+(define (trie-filter pred trie)
+  (and trie
+       (if (integer? trie)
+           (and (pred trie) trie)
+           (smart-branch (branch-prefix trie)
+                         (branch-branching-bit trie)
+                         (trie-filter pred (branch-left trie))
+                         (trie-filter pred (branch-right trie))))))
+
+(define (trie-remove pred trie)
+  (and trie
+       (if (integer? trie)
+           (and (not (pred trie)) trie)
+           (smart-branch (branch-prefix trie)
+                         (branch-branching-bit trie)
+                         (trie-remove pred (branch-left trie))
+                         (trie-remove pred (branch-right trie))))))
+
 ;;;; Integer sets
 
 (define-record-type <iset>
@@ -153,3 +177,40 @@
   (assume (iset? set))
   (assume (valid-integer? n))
   (trie-contains? (iset-trie set) n))
+
+(define (iset-empty? set)
+  (assume (iset? set))
+  (not (iset-trie set)))
+
+(define (iset-disjoint? set1 set2)
+  (assume (iset? set1))
+  (assume (iset? set2))
+  (error "Not implemented"))
+
+;;;; Updaters
+
+;; FIXME: Not in the pre-SRFI, but should be added.
+(define (iset-adjoin set n)
+  (assume (iset? set))
+  (assume (valid-integer? n))
+  (raw-iset (trie-insert (iset-trie set) n)))
+
+(define (iset-adjoin! set n) (iset-adjoin set n))
+
+(define (iset-delete set n)
+  (assume (iset? set))
+  (assume (valid-integer? n))
+  (raw-iset (trie-remove (lambda (m) (fx=? n m)) (iset-trie set))))
+
+(define (iset-delete! set n) (iset-delete set n))
+
+;; FIXME: Not in the pre-SRFI, but should be added.
+;; Implement this in terms of set difference?
+(define (iset-delete-all set ns)
+  (assume (iset? set))
+  (assume (or (pair? ns) (null? ns)))
+  (raw-iset (trie-remove (lambda (m) (member m ns fx=?))
+                         (iset-trie set))))
+
+(define (iset-delete-all set ns)
+  (iset-delete-all! set ns))

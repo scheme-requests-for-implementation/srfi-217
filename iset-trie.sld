@@ -15,6 +15,10 @@
 
   (export iset list->iset
           iset? iset-contains?
+          iset-empty? iset-disjoint?
+          iset-adjoin iset-adjoin! iset-delete iset-delete! iset-delete-all
+          iset-delete-all!
+          iset-trie  ; debug
           )
 
   (include "iset-trie.scm"))
