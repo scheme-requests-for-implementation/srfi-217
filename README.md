@@ -19,4 +19,6 @@ change in the future.
 
 # Author
 
-Wolfgang Corcoran-Mathe <wcm at sigwinch dot xyzzy minus the zy>
+Wolfgang Corcoran-Mathe
+
+Contact: wcm at sigwinch dot xyzzy minus the zy
