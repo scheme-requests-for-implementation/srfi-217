@@ -224,3 +224,29 @@
           ((integer? t) (+ acc 1))
           (else
            (lp (lp acc (branch-left t)) (branch-right t))))))
+
+(define (iset-count pred set)
+  (assume (procedure? pred))
+  (iset-fold (lambda (n acc)
+               (if (pred n) (+ 1 acc) acc))
+             0
+             set))
+
+;;;; Mapping and folding
+
+(define (iset-fold proc nil set)
+  (assume (procedure? proc))
+  (assume (iset? set))
+  (letrec
+   ((cata
+     (lambda (b t)
+       (cond ((not t) b)
+             ((integer? t) (proc t b))
+             (else
+              (cata (cata b (branch-left t)) (branch-right t)))))))
+    (let ((trie (iset-trie set)))
+      (if (branch? trie)
+          (if (negative? (branch-branching-bit trie))
+              (cata (cata nil (branch-left trie)) (branch-right trie))
+              (cata (cata nil (branch-right trie)) (branch-left trie)))
+          (cata nil trie)))))
