@@ -212,5 +212,15 @@
   (raw-iset (trie-remove (lambda (m) (member m ns fx=?))
                          (iset-trie set))))
 
-(define (iset-delete-all set ns)
-  (iset-delete-all! set ns))
+(define (iset-delete-all! set ns)
+  (iset-delete-all set ns))
+
+;;;; The whole iset
+
+(define (iset-size set)
+  (assume (iset? set))
+  (let lp ((acc 0) (t (iset-trie set)))
+    (cond ((not t) acc)
+          ((integer? t) (+ acc 1))
+          (else
+           (lp (lp acc (branch-left t)) (branch-right t))))))

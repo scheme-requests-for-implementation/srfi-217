@@ -18,6 +18,7 @@
           iset-empty? iset-disjoint?
           iset-adjoin iset-adjoin! iset-delete iset-delete! iset-delete-all
           iset-delete-all!
+          iset-size
           iset-trie  ; debug
           )
 
