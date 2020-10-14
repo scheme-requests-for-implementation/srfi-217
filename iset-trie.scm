@@ -151,6 +151,16 @@
                          (trie-remove pred (branch-left trie))
                          (trie-remove pred (branch-right trie))))))
 
+(define (%trie-find-leftmost trie)
+  (if (or (not trie) (integer? trie))
+      trie
+      (%trie-find-leftmost (branch-left trie))))
+
+(define (%trie-find-rightmost trie)
+  (if (or (not trie) (integer? trie))
+      trie
+      (%trie-find-rightmost (branch-right trie))))
+
 ;;;; Integer sets
 
 (define-record-type <iset>
@@ -186,6 +196,28 @@
   (assume (iset? set1))
   (assume (iset? set2))
   (error "Not implemented"))
+
+;;;; Accessors
+
+(define (iset-min set)
+  (assume (iset? set))
+  (let ((trie (iset-trie set)))
+    (if (branch? trie)
+        (%trie-find-leftmost
+         (if (negative? (branch-branching-bit trie))
+             (branch-right trie)
+             (branch-left trie)))
+        trie)))  ; #f or leaf
+
+(define (iset-max set)
+  (assume (iset? set))
+  (let ((trie (iset-trie set)))
+    (if (branch? trie)
+        (%trie-find-rightmost
+         (if (negative? (branch-branching-bit trie))
+             (branch-left trie)
+             (branch-right trie)))
+        trie)))  ; #f or leaf
 
 ;;;; Updaters
 
