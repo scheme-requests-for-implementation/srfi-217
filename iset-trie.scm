@@ -250,3 +250,19 @@
               (cata (cata nil (branch-left trie)) (branch-right trie))
               (cata (cata nil (branch-right trie)) (branch-left trie)))
           (cata nil trie)))))
+
+;;;; Copying and conversion
+
+(define (iset-copy set)
+  (assume (iset? set))
+  (letrec
+   ((copy-trie
+     (lambda (t)
+       (and t
+            (if (integer? t)
+                t
+                (branch (branch-prefix t)
+                        (branch-branching-bit t)
+                        (copy-trie (branch-left t))
+                        (copy-trie (branch-right t))))))))
+    (raw-iset (copy-trie (iset-trie set)))))

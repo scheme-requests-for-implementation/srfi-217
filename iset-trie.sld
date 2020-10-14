@@ -20,6 +20,7 @@
           iset-delete-all!
           iset-size
           iset-count iset-fold
+          iset-copy
           iset-trie  ; debug
           )
 
