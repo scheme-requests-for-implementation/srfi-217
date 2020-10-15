@@ -379,6 +379,16 @@
               (cata (cata nil (branch-right trie)) (branch-left trie)))
           (cata nil trie)))))
 
+(define (iset-filter pred set)
+  (assume (procedure? pred))
+  (assume (iset? set))
+  (raw-iset (trie-filter pred (iset-trie set))))
+
+(define (iset-remove pred set)
+  (assume (procedure? pred))
+  (assume (iset? set))
+  (raw-iset (trie-filter (lambda (n) (not (pred n))) (iset-trie set))))
+
 ;;;; Copying and conversion
 
 (define (iset-copy set)
@@ -394,3 +404,20 @@
                         (copy-trie (branch-left t))
                         (copy-trie (branch-right t))))))))
     (raw-iset (copy-trie (iset-trie set)))))
+
+;;;; Comparison
+
+(define (iset=? set1 set2)
+  (assume (iset? set1))
+  (assume (iset? set2))
+  (letrec
+   ((trie=?
+     (lambda (s t)
+       (cond ((not (or s t)) #t)
+             ((and (integer? s) (integer? t)) (fx=? s t))
+             ((and (branch? s) (branch? t))
+              (let*-branch (((p m s0 s1) s) ((q n t0 t1) t))
+                (and (fx=? m n) (fx=? p q) (trie=? s0 t0) (trie=? s1 t1))))
+             (else #f)))))
+    (or (eqv? set1 set2)    ; quick check
+        (trie=? (iset-trie set1) (iset-trie set2)))))

@@ -24,7 +24,9 @@
           iset-any? iset-every?
           iset-count iset-fold
           iset-map iset-for-each
+          iset-filter iset-remove
           iset-copy
+          iset=?
           iset-trie  ; debug
           )
 
