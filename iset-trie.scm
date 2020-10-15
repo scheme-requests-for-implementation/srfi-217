@@ -264,6 +264,24 @@
              0
              set))
 
+(define (iset-any? pred set)
+  (assume (procedure? pred))
+  (call-with-current-continuation
+   (lambda (return)
+     (iset-fold (lambda (n _)
+                  (and (pred n) (return #t)))
+                #f
+                set))))
+
+(define (iset-every? pred set)
+  (assume (procedure? pred))
+  (call-with-current-continuation
+   (lambda (return)
+     (iset-fold (lambda (n _)
+                  (or (pred n) (return #f)))
+                #f
+                set))))
+
 ;;;; Mapping and folding
 
 (define (iset-fold proc nil set)

@@ -20,6 +20,7 @@
           iset-adjoin iset-adjoin! iset-delete iset-delete! iset-delete-all
           iset-delete-all!
           iset-size
+          iset-any? iset-every?
           iset-count iset-fold
           iset-copy
           iset-trie  ; debug
