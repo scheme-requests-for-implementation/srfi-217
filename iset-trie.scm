@@ -405,6 +405,9 @@
                         (copy-trie (branch-right t))))))))
     (raw-iset (copy-trie (iset-trie set)))))
 
+(define (iset->list set)
+  (iset-fold cons '() set))
+
 ;;;; Comparison
 
 (define (iset=? set1 set2)

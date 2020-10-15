@@ -26,6 +26,7 @@
           iset-map iset-for-each
           iset-filter iset-remove
           iset-copy
+          iset->list
           iset=?
           iset<? iset>? iset<=? iset>=?
           iset-trie  ; debug
