@@ -22,6 +22,7 @@
           iset-size
           iset-any? iset-every?
           iset-count iset-fold
+          iset-map iset-for-each
           iset-copy
           iset-trie  ; debug
           )

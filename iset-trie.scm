@@ -284,6 +284,27 @@
 
 ;;;; Mapping and folding
 
+(define (iset-map proc set)
+  (assume (procedure? proc))
+  (raw-iset
+   (iset-fold (lambda (n t)
+                (let ((n* (proc n)))
+                  (assume (valid-integer? n*))
+                  (trie-insert t (proc n))))
+              #f
+              set)))
+
+(define (unspecified)
+  (if #f #f))
+
+(define (iset-for-each proc set)
+  (assume (procedure? proc))
+  (iset-fold (lambda (n _)
+               (proc n)
+               (unspecified))
+             (unspecified)
+             set))
+
 (define (iset-fold proc nil set)
   (assume (procedure? proc))
   (assume (iset? set))
