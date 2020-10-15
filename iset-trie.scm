@@ -161,6 +161,41 @@
       trie
       (%trie-find-rightmost (branch-right trie))))
 
+(define (trie-disjoint? trie0 trie1)
+  (letrec
+   ((disjoint?
+     (lambda (s t)
+       (or (not s)
+           (not t)
+           (cond ((integer? s)
+                  (if (integer? t)
+                      (not (fx=? s t))
+                      (not (trie-contains? t s))))
+                 ((integer? t) (not (trie-contains? t s)))
+                 (else (branches-disjoint? s t))))))
+    (branches-disjoint?
+     (lambda (s t)
+       (let ((p (branch-prefix s))
+             (m (branch-branching-bit s))
+             (s0 (branch-left s))
+             (s1 (branch-right s))
+             (q (branch-prefix t))
+             (n (branch-branching-bit t))
+             (t0 (branch-left t))
+             (t1 (branch-right t)))
+         (cond ((and (fx=? m n) (fx=? p q))
+                (and (disjoint? s0 t0) (disjoint? s1 t1)))
+               ((and (fx>? m n) (match-prefix? q p m))
+                (if (zero-bit? q m)
+                    (disjoint? s0 t)
+                    (disjoint? s1 t)))
+               ((and (fx<? m n) (match-prefix? p q n))
+                (if (zero-bit? p n)
+                    (disjoint? s t0)
+                    (disjoint? s t1)))
+               (else #t))))))      ; the prefixes disagree
+    (disjoint? trie0 trie1)))
+
 ;;;; Integer sets
 
 (define-record-type <iset>
@@ -217,7 +252,7 @@
 (define (iset-disjoint? set1 set2)
   (assume (iset? set1))
   (assume (iset? set2))
-  (error "Not implemented"))
+  (trie-disjoint? (iset-trie set1) (iset-trie set2)))
 
 ;;;; Accessors
 
