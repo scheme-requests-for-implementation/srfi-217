@@ -27,6 +27,18 @@
   (left branch-left)
   (right branch-right))
 
+;; Shorthand for extracting branch elements.
+(define-syntax let*-branch
+  (syntax-rules ()
+    ((_ () e1 e2 ...) (begin e1 e2 ...))
+    ((_ (((p m l r) expr) . binds) . body)
+     (let ((b expr))
+       (let ((p (branch-prefix b))
+             (m (branch-branching-bit b))
+             (l (branch-left b))
+             (r (branch-right b)))
+         (let*-branch binds . body))))))
+
 (define (valid-integer? x) (fixnum? x))
 
 ;; Zero the bits of k at and below (BE) the set bit of m.
@@ -102,14 +114,8 @@
               (else (merge-branches s t)))))
      (merge-branches
       (lambda (s t)
-        (let ((p (branch-prefix s))
-              (m (branch-branching-bit s))
-              (s0 (branch-left s))
-              (s1 (branch-right s))
-              (q (branch-prefix t))
-              (n (branch-branching-bit t))
-              (t0 (branch-left t))
-              (t1 (branch-right t)))
+        (let*-branch (((p m s0 s1) s)
+                      ((q n t0 t1) t))
           (cond ((and (fx=? m n) (fx=? p q))
                  ;; the prefixes match, so merge the subtries
                  (branch p m (merge s0 t0) (merge s1 t1)))
@@ -175,14 +181,8 @@
                  (else (branches-disjoint? s t))))))
     (branches-disjoint?
      (lambda (s t)
-       (let ((p (branch-prefix s))
-             (m (branch-branching-bit s))
-             (s0 (branch-left s))
-             (s1 (branch-right s))
-             (q (branch-prefix t))
-             (n (branch-branching-bit t))
-             (t0 (branch-left t))
-             (t1 (branch-right t)))
+       (let*-branch (((p m s0 s1) s)
+                    ((q n t0 t1) t))
          (cond ((and (fx=? m n) (fx=? p q))
                 (and (disjoint? s0 t0) (disjoint? s1 t1)))
                ((and (fx>? m n) (match-prefix? q p m))
