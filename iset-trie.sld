@@ -27,6 +27,7 @@
           iset-filter iset-remove
           iset-copy
           iset=?
+          iset<? iset>? iset<=? iset>=?
           iset-trie  ; debug
           )
 

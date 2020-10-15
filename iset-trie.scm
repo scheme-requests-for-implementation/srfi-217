@@ -421,3 +421,23 @@
              (else #f)))))
     (or (eqv? set1 set2)    ; quick check
         (trie=? (iset-trie set1) (iset-trie set2)))))
+
+(define (iset<? set1 set2)
+  (assume (iset? set1))
+  (assume (iset? set2))
+  (error "not implemented"))
+
+(define (iset>? set1 set2)
+  (assume (iset? set1))
+  (assume (iset? set2))
+  (error "not implemented"))
+
+(define (iset<=? set1 set2)
+  (assume (iset? set1))
+  (assume (iset? set2))
+  (error "not implemented"))
+
+(define (iset>=? set1 set2)
+  (assume (iset? set1))
+  (assume (iset? set2))
+  (error "not implemented"))
