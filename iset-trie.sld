@@ -14,6 +14,7 @@
            (or expr (car 0))))))))
 
   (export iset list->iset
+          iset-unfold make-iset-range
           iset-min iset-max
           iset? iset-contains?
           iset-empty? iset-disjoint?

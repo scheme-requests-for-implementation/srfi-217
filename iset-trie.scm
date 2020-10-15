@@ -181,6 +181,28 @@
          #f
          ns)))
 
+(define (iset-unfold stop? mapper successor seed)
+  (assume (procedure? stop?))
+  (assume (procedure? mapper))
+  (assume (procedure? successor))
+  (let lp ((trie #f) (seed seed))
+    (if (stop? seed)
+        trie
+        (let ((n (mapper seed)))
+          (assume (valid-integer? n))
+          (lp (trie-insert trie n) (successor seed))))))
+
+;; TODO: Bitmap compression will enable a much more efficient version
+;; of this.
+(define (make-iset-range low high)
+  (assume (valid-integer? low))
+  (assume (valid-integer? high))
+  (assume (>= high low))
+  (iset-unfold (lambda (i) (= i high))
+               values
+               (lambda (i) (+ i 1))
+               low))
+
 ;;;; Predicates
 
 (define (iset-contains? set n)
