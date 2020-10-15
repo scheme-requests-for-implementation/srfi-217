@@ -222,7 +222,7 @@
   (assume (procedure? successor))
   (let lp ((trie #f) (seed seed))
     (if (stop? seed)
-        trie
+        (raw-iset trie)
         (let ((n (mapper seed)))
           (assume (valid-integer? n))
           (lp (trie-insert trie n) (successor seed))))))
