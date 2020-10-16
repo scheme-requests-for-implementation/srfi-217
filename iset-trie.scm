@@ -141,9 +141,9 @@
        (let*-branch (((p m l r) t))
          (if (negative? m)
              (let-values (((n r*) (update r)))   ; root node only
-               (values n (branch p m l r*)))
+               (values n (smart-branch p m l r*)))
              (let-values (((n l*) (update l)))
-               (values n (branch p m l* r))))))))
+               (values n (smart-branch p m l* r))))))))
     (let*-values (((trie) (iset-trie set))
                   ((least trie*) (update trie)))
       (values least (raw-iset trie*)))))
@@ -161,9 +161,9 @@
        (let*-branch (((p m l r) t))
          (if (negative? m)
              (let-values (((n l*) (update l)))   ; root node only
-               (values n (branch p m l* r)))
+               (values n (smart-branch p m l* r)))
              (let-values (((n r*) (update r)))
-               (values n (branch p m l r*))))))))
+               (values n (smart-branch p m l r*))))))))
     (let*-values (((trie) (iset-trie set))
                   ((least trie*) (update trie)))
       (values least (raw-iset trie*)))))
