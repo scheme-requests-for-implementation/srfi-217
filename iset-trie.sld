@@ -34,4 +34,5 @@
           iset-trie  ; debug
           )
 
+  (include "trie.scm")
   (include "iset-trie.scm"))
