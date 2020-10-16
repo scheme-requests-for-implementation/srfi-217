@@ -491,3 +491,12 @@
   (assume (iset? set1))
   (assume (iset? set2))
   (error "not implemented"))
+
+;;;; Set theory operations
+
+(define (iset-union set1 set2)
+  (assume (iset? set1))
+  (assume (iset? set2))
+  (raw-iset (trie-merge (iset-trie set1) (iset-trie set2))))
+
+(define (iset-union! set1 set2) (iset-union set1 set2))
