@@ -65,4 +65,14 @@
   (test-equal iset=?
               (list->iset (iota 30 100 3))
               (iset-union pos-set (list->iset (iota 20 130 3))))
+
+  ;; iset-xor
+  (test-equal iset=? mixed-set (iset-xor (iset) mixed-set))
+  (test-equal iset=?
+              (list->iset (append (iota 20 100 3) (iota 20 -100 3)))
+              (iset-xor pos-set neg-set))
+  (test-equal iset=? (iset) (iset-xor pos-set pos-set))
+  (test-equal iset=?
+              (list->iset (append (iota 10 100 3) (iota 10 160 3)))
+              (iset-xor pos-set (list->iset (iota 20 130 3))))
   )
