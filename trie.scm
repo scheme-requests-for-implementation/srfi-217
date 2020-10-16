@@ -175,3 +175,19 @@
                (else #t))))))      ; the prefixes disagree
     (disjoint? trie0 trie1)))
 
+(define (trie-delete trie key)
+  (letrec
+   ((update
+     (lambda (t)
+       (cond ((not t) #f)
+             ((integer? t) (if (fx=? t key) #f t))
+             (else (update-branch t)))))
+    (update-branch
+     (lambda (t)
+       (let*-branch (((p m l r) t))
+         (if (match-prefix? key p m)
+             (if (zero-bit? key m)
+                 (smart-branch p m (update l) r)
+                 (smart-branch p m l (update r)))
+             t)))))  ; key doesn't occur in t
+    (update trie)))

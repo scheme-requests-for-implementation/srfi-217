@@ -110,7 +110,7 @@
 (define (iset-delete set n)
   (assume (iset? set))
   (assume (valid-integer? n))
-  (raw-iset (trie-remove (lambda (m) (fx=? n m)) (iset-trie set))))
+  (raw-iset (trie-delete (iset-trie set) n)))
 
 (define (iset-delete! set n) (iset-delete set n))
 
