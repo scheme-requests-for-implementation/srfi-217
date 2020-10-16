@@ -31,6 +31,7 @@
           iset=?
           iset<? iset>? iset<=? iset>=?
           iset-union iset-union!
+          iset-xor iset-xor!
           iset-trie  ; debug
           )
 

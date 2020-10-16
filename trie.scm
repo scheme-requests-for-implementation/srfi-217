@@ -1,3 +1,10 @@
+;;; FIXME:
+;;;
+;;; * Bitmap compression.  Dense trees waste space at the moment.
+;;;
+;;; * Too much duplication of the trie-traversing algorithm
+;;;   with minor variations.  Unify procedures where possible.
+
 (define-record-type <branch>
   (branch prefix branching-bit left right)
   branch?
@@ -191,3 +198,20 @@
                  (smart-branch p m l (update r)))
              t)))))  ; key doesn't occur in t
     (update trie)))
+
+;; Identical to trie-insert, but delete key if it exists.
+(define (trie-xor-insert trie key)
+  (letrec
+   ((ins
+     (lambda (t)
+       (cond ((not t) key)  ; new leaf
+             ((integer? t)
+              (if (fx=? t key) #f (trie-join key 0 key t 0 t)))
+             (else
+              (let*-branch (((p m l r) t))
+                (if (match-prefix? key p m)
+                    (if (zero-bit? key m)
+                        (smart-branch p m (ins l) r)
+                        (smart-branch p m l (ins r)))
+                    (trie-join key 0 key p m t))))))))
+    (ins trie)))
