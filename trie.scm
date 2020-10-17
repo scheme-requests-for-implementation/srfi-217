@@ -37,10 +37,10 @@
 (define (match-prefix? k p m)
   (fx=? (mask k m) p))
 
-(define (branching-bit p0 m0 p1 m1)
-  (if (fxnegative? (fxxor p0 p1))
+(define (branching-bit p1 m1 p2 m2)
+  (if (fxnegative? (fxxor p1 p2))
       fx-least        ; different signs
-      (highest-bit-mask (fxxor p0 p1) (fxmax 1 (fx* 2 (fxmax m0 m1))))))
+      (highest-bit-mask (fxxor p1 p2) (fxmax 1 (fx* 2 (fxmax m1 m2))))))
 
 ;; Two's-complement trick.
 (define (lowest-set-bit b)
@@ -73,11 +73,11 @@
                     (trie-join key 0 key p m t))))))))
     (ins trie)))
 
-(define (trie-join p0 m0 t0 p1 m1 t1)
-  (let ((m (branching-bit p0 m0 p1 m1)))
-    (if (zero-bit? p0 m)
-        (branch (mask p0 m) m t0 t1)
-        (branch (mask p0 m) m t1 t0))))
+(define (trie-join prefix1 mask1 trie1 prefix2 mask2 trie2)
+  (let ((m (branching-bit prefix1 mask1 prefix2 mask2)))
+    (if (zero-bit? prefix1 m)
+        (branch (mask prefix1 m) m trie1 trie2)
+        (branch (mask prefix1 m) m trie2 trie1))))
 
 (define (trie-contains? trie key)
   (and trie
@@ -89,7 +89,7 @@
                       (trie-contains? (branch-left trie) key)
                       (trie-contains? (branch-right trie) key)))))))
 
-(define (trie-merge trie0 trie1)
+(define (trie-merge trie1 trie2)
   (letrec
     ((merge
       (lambda (s t)
@@ -100,30 +100,30 @@
               (else (merge-branches s t)))))
      (merge-branches
       (lambda (s t)
-        (let*-branch (((p m s0 s1) s)
-                      ((q n t0 t1) t))
+        (let*-branch (((p m s1 s2) s)
+                      ((q n t1 t2) t))
           (cond ((and (fx=? m n) (fx=? p q))
                  ;; the prefixes match, so merge the subtries
-                 (branch p m (merge s0 t0) (merge s1 t1)))
+                 (branch p m (merge s1 t1) (merge s2 t2)))
                 ((and (fx>? m n) (match-prefix? q p m))
                  ;; p is a prefix of q, so merge t with a subtrie of s.
                  (if (zero-bit? q m)
-                     (branch p m (merge s0 t) s1)
-                     (branch p m s0 (merge s1 t))))
+                     (branch p m (merge s1 t) s2)
+                     (branch p m s1 (merge s2 t))))
                 ((and (fx<? m n) (match-prefix? p q n))
                  ;; q is a prefix of p, so merge s with a subtrie of t.
                  (if (zero-bit? p n)
-                     (branch q n (merge s t0) t1)
-                     (branch q n t0 (merge s t1))))
+                     (branch q n (merge s t1) t2)
+                     (branch q n t1 (merge s t2))))
                 (else    ; the prefixes disagree
                  (trie-join p m s q n t)))))))
-    (merge trie0 trie1)))
+    (merge trie1 trie2)))
 
-;; Construct a branch only if the subtrees s and t are non-empty.
-(define (smart-branch p m s t)
-  (cond ((not s) t)
-        ((not t) s)
-        (else (branch p m s t))))
+;; Construct a branch only if the subtrees are non-empty.
+(define (smart-branch prefix mask trie1 trie2)
+  (cond ((not trie1) trie2)
+        ((not trie2) trie1)
+        (else (branch prefix mask trie1 trie2))))
 
 (define (copy-trie trie)
   (and trie
@@ -164,12 +164,12 @@
 
 ;;;; Comparisons
 
-(define (trie=? s t)
-  (cond ((not (or s t)) #t)
-        ((and (integer? s) (integer? t)) (fx=? s t))
-        ((and (branch? s) (branch? t))
-         (let*-branch (((p m s0 s1) s) ((q n t0 t1) t))
-           (and (fx=? m n) (fx=? p q) (trie=? s0 t0) (trie=? s1 t1))))
+(define (trie=? trie1 trie2)
+  (cond ((not (or trie1 trie2)) #t)
+        ((and (integer? trie1) (integer? trie2)) (fx=? trie1 trie2))
+        ((and (branch? trie1) (branch? trie2))
+         (let*-branch (((p m l1 r1) trie1) ((q n l2 r2) trie2))
+           (and (fx=? m n) (fx=? p q) (trie=? l1 l2) (trie=? r1 r2))))
         (else #f)))
 
 ;; Returns the symbol 'less' if trie1 is a proper subset of trie2,
@@ -219,7 +219,7 @@
 (define (trie-proper-subset? trie1 trie2)
   (eqv? (trie-subset-compare trie1 trie2) 'less))
 
-(define (trie-disjoint? trie0 trie1)
+(define (trie-disjoint? trie1 trie2)
   (letrec
    ((disjoint?
      (lambda (s t)
@@ -233,20 +233,19 @@
                  (else (branches-disjoint? s t))))))
     (branches-disjoint?
      (lambda (s t)
-       (let*-branch (((p m s0 s1) s)
-                    ((q n t0 t1) t))
+       (let*-branch (((p m sl sr) s) ((q n tl tr) t))
          (cond ((and (fx=? m n) (fx=? p q))
-                (and (disjoint? s0 t0) (disjoint? s1 t1)))
+                (and (disjoint? sl tl) (disjoint? sr tr)))
                ((and (fx>? m n) (match-prefix? q p m))
                 (if (zero-bit? q m)
-                    (disjoint? s0 t)
-                    (disjoint? s1 t)))
+                    (disjoint? sl t)
+                    (disjoint? sr t)))
                ((and (fx<? m n) (match-prefix? p q n))
                 (if (zero-bit? p n)
-                    (disjoint? s t0)
-                    (disjoint? s t1)))
+                    (disjoint? s tl)
+                    (disjoint? s tr)))
                (else #t))))))      ; the prefixes disagree
-    (disjoint? trie0 trie1)))
+    (disjoint? trie1 trie2)))
 
 (define (trie-delete trie key)
   (letrec
