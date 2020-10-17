@@ -89,14 +89,14 @@
                       (trie-contains? (branch-left trie) key)
                       (trie-contains? (branch-right trie) key)))))))
 
-(define (trie-merge trie1 trie2)
+(define (trie-merge insert trie1 trie2)
   (letrec
     ((merge
       (lambda (s t)
         (cond ((not s) t)
               ((not t) s)
-              ((integer? s) (trie-insert t s))
-              ((integer? t) (trie-insert s t))
+              ((integer? s) (insert t s))
+              ((integer? t) (insert s t))
               (else (merge-branches s t)))))
      (merge-branches
       (lambda (s t)
