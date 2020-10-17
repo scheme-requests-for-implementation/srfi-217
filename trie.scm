@@ -219,6 +219,7 @@
 (define (trie-proper-subset? trie1 trie2)
   (eqv? (trie-subset-compare trie1 trie2) 'less))
 
+;; FIXME: Incorrect handling of negative branching bits.
 (define (trie-disjoint? trie1 trie2)
   (letrec
    ((disjoint?
@@ -229,7 +230,7 @@
                   (if (integer? t)
                       (not (fx=? s t))
                       (not (trie-contains? t s))))
-                 ((integer? t) (not (trie-contains? t s)))
+                 ((integer? t) (not (trie-contains? s t)))
                  (else (branches-disjoint? s t))))))
     (branches-disjoint?
      (lambda (s t)
