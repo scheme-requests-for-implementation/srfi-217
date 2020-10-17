@@ -153,6 +153,16 @@
       trie
       (%trie-find-rightmost (branch-right trie))))
 
+;;;; Comparisons
+
+(define (trie=? s t)
+  (cond ((not (or s t)) #t)
+        ((and (integer? s) (integer? t)) (fx=? s t))
+        ((and (branch? s) (branch? t))
+         (let*-branch (((p m s0 s1) s) ((q n t0 t1) t))
+           (and (fx=? m n) (fx=? p q) (trie=? s0 t0) (trie=? s1 t1))))
+        (else #f)))
+
 (define (trie-disjoint? trie0 trie1)
   (letrec
    ((disjoint?

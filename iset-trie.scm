@@ -281,17 +281,8 @@
 (define (iset=? set1 set2)
   (assume (iset? set1))
   (assume (iset? set2))
-  (letrec
-   ((trie=?
-     (lambda (s t)
-       (cond ((not (or s t)) #t)
-             ((and (integer? s) (integer? t)) (fx=? s t))
-             ((and (branch? s) (branch? t))
-              (let*-branch (((p m s0 s1) s) ((q n t0 t1) t))
-                (and (fx=? m n) (fx=? p q) (trie=? s0 t0) (trie=? s1 t1))))
-             (else #f)))))
-    (or (eqv? set1 set2)    ; quick check
-        (trie=? (iset-trie set1) (iset-trie set2)))))
+  (or (eqv? set1 set2)    ; quick check
+      (trie=? (iset-trie set1) (iset-trie set2))))
 
 (define (iset<? set1 set2)
   (assume (iset? set1))
