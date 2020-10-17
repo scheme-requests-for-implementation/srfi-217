@@ -261,17 +261,7 @@
 
 (define (iset-copy set)
   (assume (iset? set))
-  (letrec
-   ((copy-trie
-     (lambda (t)
-       (and t
-            (if (integer? t)
-                t
-                (branch (branch-prefix t)
-                        (branch-branching-bit t)
-                        (copy-trie (branch-left t))
-                        (copy-trie (branch-right t))))))))
-    (raw-iset (copy-trie (iset-trie set)))))
+  (raw-iset (copy-trie (iset-trie set))))
 
 (define (iset->list set)
   (iset-fold cons '() set))
@@ -281,28 +271,32 @@
 (define (iset=? set1 set2)
   (assume (iset? set1))
   (assume (iset? set2))
-  (or (eqv? set1 set2)    ; quick check
+  (or (eqv? set1 set2)         ; quick check
       (trie=? (iset-trie set1) (iset-trie set2))))
 
 (define (iset<? set1 set2)
   (assume (iset? set1))
   (assume (iset? set2))
-  (error "not implemented"))
+  (trie-proper-subset? (iset-trie set1) (iset-trie set2)))
 
 (define (iset>? set1 set2)
   (assume (iset? set1))
   (assume (iset? set2))
-  (error "not implemented"))
+  (trie-proper-subset? (iset-trie set2) (iset-trie set1)))
 
 (define (iset<=? set1 set2)
   (assume (iset? set1))
   (assume (iset? set2))
-  (error "not implemented"))
+  (and (memv (trie-subset-compare (iset-trie set1) (iset-trie set2))
+             '(less equal))
+       #t))
 
 (define (iset>=? set1 set2)
   (assume (iset? set1))
   (assume (iset? set2))
-  (error "not implemented"))
+  (and (memv (trie-subset-compare (iset-trie set1) (iset-trie set2))
+             '(greater equal))
+       #t))
 
 ;;;; Set theory operations
 
