@@ -89,6 +89,11 @@
                       (trie-contains? (branch-left trie) key)
                       (trie-contains? (branch-right trie) key)))))))
 
+(define (branching-bit-higher? mask1 mask2)
+  (if (negative? (fxxor mask1 mask2))  ; signs differ
+      (negative? mask1)
+      (fx>? mask1 mask2)))
+
 (define (trie-merge insert trie1 trie2)
   (letrec
     ((merge
@@ -219,7 +224,6 @@
 (define (trie-proper-subset? trie1 trie2)
   (eqv? (trie-subset-compare trie1 trie2) 'less))
 
-;; FIXME: Incorrect handling of negative branching bits.
 (define (trie-disjoint? trie1 trie2)
   (letrec
    ((disjoint?
@@ -237,11 +241,11 @@
        (let*-branch (((p m sl sr) s) ((q n tl tr) t))
          (cond ((and (fx=? m n) (fx=? p q))
                 (and (disjoint? sl tl) (disjoint? sr tr)))
-               ((and (fx>? m n) (match-prefix? q p m))
+               ((and (branching-bit-higher? m n) (match-prefix? q p m))
                 (if (zero-bit? q m)
                     (disjoint? sl t)
                     (disjoint? sr t)))
-               ((and (fx<? m n) (match-prefix? p q n))
+               ((and (branching-bit-higher? n m) (match-prefix? p q n))
                 (if (zero-bit? p n)
                     (disjoint? s tl)
                     (disjoint? s tr)))
