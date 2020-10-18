@@ -202,8 +202,8 @@
     (compare-branches
      (lambda (s t)
        (let*-branch (((p m sl sr) s) ((q n tl tr) t))
-         (cond ((fx>? m n) 'greater)
-               ((fx<? m n)
+         (cond ((branching-bit-higher? m n) 'greater)
+               ((branching-bit-higher? n m)
                 (if (match-prefix? p q n)
                     (let ((comp (if (zero-bit? p n)
                                     (compare s tl)
