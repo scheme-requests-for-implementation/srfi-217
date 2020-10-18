@@ -64,12 +64,11 @@
              ((integer? t)
               (if (fx=? t key) t (trie-join key 0 key t 0 t)))
              (else
-              (let ((p (branch-prefix t))
-                    (m (branch-branching-bit t)))
+              (let*-branch (((p m l r) t))
                 (if (match-prefix? key p m)
                     (if (zero-bit? key m)
-                        (branch p m (ins (branch-left t)) (branch-right t))
-                        (branch p m (branch-left t) (ins (branch-right t))))
+                        (branch p m (ins l) r)
+                        (branch p m l (ins r)))
                     (trie-join key 0 key p m t))))))))
     (ins trie)))
 
@@ -83,11 +82,11 @@
   (and trie
        (if (integer? trie)
            (fx=? key trie)
-           (let ((m (branch-branching-bit trie)))
-             (and (match-prefix? key (branch-prefix trie) m)
+           (let (((p m l r) trie))
+             (and (match-prefix? key p m)
                   (if (zero-bit? key m)
-                      (trie-contains? (branch-left trie) key)
-                      (trie-contains? (branch-right trie) key)))))))
+                      (trie-contains? l key)
+                      (trie-contains? r key)))))))
 
 (define (branching-bit-higher? mask1 mask2)
   (if (negative? (fxxor mask1 mask2))  ; signs differ
