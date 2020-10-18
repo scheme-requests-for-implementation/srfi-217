@@ -109,12 +109,12 @@
           (cond ((and (fx=? m n) (fx=? p q))
                  ;; the prefixes match, so merge the subtries
                  (smart-branch p m (merge s1 t1) (merge s2 t2)))
-                ((and (fx>? m n) (match-prefix? q p m))
+                ((and (branching-bit-higher? m n) (match-prefix? q p m))
                  ;; p is a prefix of q, so merge t with a subtrie of s.
                  (if (zero-bit? q m)
                      (smart-branch p m (merge s1 t) s2)
                      (smart-branch p m s1 (merge s2 t))))
-                ((and (fx<? m n) (match-prefix? p q n))
+                ((and (branching-bit-higher? n m) (match-prefix? p q n))
                  ;; q is a prefix of p, so merge s with a subtrie of t.
                  (if (zero-bit? p n)
                      (smart-branch q n (merge s t1) t2)
