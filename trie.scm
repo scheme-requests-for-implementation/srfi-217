@@ -82,7 +82,7 @@
   (and trie
        (if (integer? trie)
            (fx=? key trie)
-           (let (((p m l r) trie))
+           (let*-branch (((p m l r) trie))
              (and (match-prefix? key p m)
                   (if (zero-bit? key m)
                       (trie-contains? l key)
