@@ -320,3 +320,27 @@
                 (smart-branch p m (intersect sl tl) (intersect sr tr)))
                (else #f))))))
     (intersect trie1 trie2)))
+
+(define (trie-difference trie1 trie2)
+  (letrec
+   ((difference
+     (lambda (s t)
+       (cond ((or (not s) (not t)) #f)
+             ((integer? s) (if (trie-contains? t s) #f s))
+             ((integer? t) (trie-delete s t))
+             (else (branch-difference s t)))))
+    (branch-difference
+     (lambda (s t)
+       (let*-branch (((p m sl sr) s) ((q n tl tr) t))
+         (cond ((fx=? p q)
+                (smart-branch p m (difference sl tl) (difference sr tr)))
+               ((and (branching-bit-higher? m n) (match-prefix? q p m))
+                (if (zero-bit? q m)
+                    (smart-branch p m (difference sl t) sr)
+                    (smart-branch p m sl (difference sr t))))
+               ((and (branching-bit-higher? n m) (match-prefix? p q n))
+                (if (zero-bit? p n)
+                    (smart-branch q n (difference s tl) tr)
+                    (smart-branch q n tl (difference s tr))))
+               (else s))))))
+    (difference trie1 trie2)))

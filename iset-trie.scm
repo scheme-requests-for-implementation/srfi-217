@@ -314,6 +314,13 @@
 
 (define (iset-intersection! set1 set2) (iset-intersection set1 set2))
 
+(define (iset-difference set1 set2)
+  (assume (iset? set1))
+  (assume (iset? set2))
+  (raw-iset (trie-difference (iset-trie set1) (iset-trie set2))))
+
+(define (iset-difference! set1 set2) (iset-difference set1 set2))
+
 (define (iset-xor set1 set2)
   (assume (iset? set1))
   (assume (iset? set2))

@@ -33,6 +33,7 @@
           iset<? iset>? iset<=? iset>=?
           iset-union iset-union!
           iset-intersection iset-intersection!
+          iset-difference iset-difference!
           iset-xor iset-xor!
           iset-trie  ; debug
           )
