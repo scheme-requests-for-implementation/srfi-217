@@ -1,7 +1,7 @@
 (import (scheme base)
         (iset-trie)
         (chibi test)
-        (only (srfi 1) iota any every last)
+        (only (srfi 1) iota any every last take-while drop-while)
         )
 
 ;;; Utility
@@ -135,6 +135,26 @@
   (test-equal iset=?
               (list->iset (iota 30 100 3))
               (iset-union pos-set (list->iset (iota 20 130 3))))
+
+  ;; iset-intersection
+  (test-assert (iset-empty? (iset-intersection (iset) mixed-set)))
+  (test-equal iset=? neg-set (iset-intersection neg-set neg-set))
+  (test-equal iset=? (iset -97) (iset-intersection (iset -97) neg-set))
+  (test-equal iset=? (iset) (iset-intersection pos-set neg-set))
+  (test-equal iset=?
+              (list->iset (drop-while negative? mixed-seq))
+              (iset-intersection mixed-set dense-set))
+
+  ;; iset-difference
+  (test-assert (iset-empty? (iset-difference neg-set neg-set)))
+  (test-equal iset=? pos-set (iset-difference pos-set neg-set))
+  (test-equal iset=? pos-set (iset-difference pos-set neg-set))
+  (test-equal iset=?
+              (iset 100)
+              (iset-difference pos-set (list->iset (cdr pos-seq))))
+  (test-equal iset=?
+              (list->iset (take-while negative? mixed-seq))
+              (iset-difference mixed-set dense-set))
 
   ;; iset-xor
   (test-equal iset=? mixed-set (iset-xor (iset) mixed-set))
