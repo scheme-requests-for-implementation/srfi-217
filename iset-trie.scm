@@ -204,7 +204,7 @@
    (lambda (return)
      (iset-fold (lambda (n _)
                   (or (pred n) (return #f)))
-                #f
+                #t
                 set))))
 
 ;;;; Mapping and folding
