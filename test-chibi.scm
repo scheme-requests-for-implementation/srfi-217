@@ -297,4 +297,45 @@
               (iset 100 103 106)
               (iset-closed-open-interval pos-set 100 109))
   (test-assert (iset-empty? (iset-closed-open-interval neg-set 0 50)))
+
+  ;;; iset-range*
+
+  (test-assert (iset-empty? (iset-range= pos-set 90)))
+  (test-equal iset=? (iset 100) (iset-range= pos-set 100))
+
+  (test-assert (iset-empty? (iset-range< (iset) 10)))
+  (test-equal iset=?
+              (iset 100 103 106)
+              (iset-range< pos-set 109))
+  (test-equal iset=?
+              (iset -10 -7)
+              (iset-range< mixed-set -4))
+  (test-assert (iset-empty? (iset-range< mixed-set -15)))
+
+  (test-assert (iset-empty? (iset-range<= (iset) 10)))
+  (test-equal iset=?
+              (iset 100 103 106 109)
+              (iset-range<= pos-set 109))
+  (test-equal iset=?
+              (iset -10 -7 -4)
+              (iset-range<= mixed-set -4))
+  (test-assert (iset-empty? (iset-range<= mixed-set -15)))
+
+  (test-assert (iset-empty? (iset-range> (iset) 10)))
+  (test-equal iset=?
+              (iset 151 154 157)
+              (iset-range> pos-set 148))
+  (test-equal iset=?
+              (iset 41 44 47)
+              (iset-range> mixed-set 38))
+  (test-assert (iset-empty? (iset-range> mixed-set 50)))
+
+  (test-assert (iset-empty? (iset-range>= (iset) 10)))
+  (test-equal iset=?
+              (iset 148 151 154 157)
+              (iset-range>= pos-set 148))
+  (test-equal iset=?
+              (iset 38 41 44 47)
+              (iset-range>= mixed-set 38))
+  (test-assert (iset-empty? (iset-range>= mixed-set 50)))
   )
