@@ -258,3 +258,29 @@
               (list->iset (append (iota 10 100 3) (iota 10 160 3)))
               (iset-xor pos-set (list->iset (iota 20 130 3))))
   )
+
+(test-group "Subsets"
+  (test-assert (iset-empty? (iset-open-interval (iset) 0 10)))
+  (test-equal iset=?
+              (iset 103 106)
+              (iset-open-interval pos-set 100 109))
+  (test-assert (iset-empty? (iset-open-interval neg-set 0 50)))
+
+  (test-assert (iset-empty? (iset-closed-interval (iset) 0 10)))
+  (test-equal iset=?
+              (iset 100 103 106 109)
+              (iset-closed-interval pos-set 100 109))
+  (test-assert (iset-empty? (iset-closed-interval neg-set 0 50)))
+
+  (test-assert (iset-empty? (iset-open-closed-interval (iset) 0 10)))
+  (test-equal iset=?
+              (iset 103 106 109)
+              (iset-open-closed-interval pos-set 100 109))
+  (test-assert (iset-empty? (iset-open-closed-interval neg-set 0 50)))
+
+  (test-assert (iset-empty? (iset-closed-open-interval (iset) 0 10)))
+  (test-equal iset=?
+              (iset 100 103 106)
+              (iset-closed-open-interval pos-set 100 109))
+  (test-assert (iset-empty? (iset-closed-open-interval neg-set 0 50)))
+  )
