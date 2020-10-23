@@ -35,6 +35,9 @@
           iset-intersection iset-intersection!
           iset-difference iset-difference!
           iset-xor iset-xor!
+          iset-open-interval iset-closed-interval iset-open-closed-interval
+          iset-closed-open-interval iset-range= iset-range< iset-range<=
+          iset-range> iset-range>=
           iset-trie  ; debug
           )
 

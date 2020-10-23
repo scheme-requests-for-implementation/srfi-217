@@ -330,3 +330,51 @@
        (trie-merge trie-xor-insert (iset-trie set1) (iset-trie set2)))))
 
 (define (iset-xor! set1 set2) (iset-xor set1 set2))
+
+;;;; Subsets
+
+(define (iset-range= set k)
+  (if (iset-contains? set k) (iset k) (iset)))
+
+;;; FIXME: The following procedures are implemented trivially in terms
+;;; of iset-filter.  Better versions to come.
+
+(define (iset-open-interval set low high)
+  (assume (valid-integer? low))
+  (assume (valid-integer? high))
+  (assume (fx>=? high low))
+  (iset-filter (lambda (n) (and (fx>? n low) (fx<? n high))) set))
+
+(define (iset-closed-interval set low high)
+  (assume (valid-integer? low))
+  (assume (valid-integer? high))
+  (assume (fx>=? high low))
+  (iset-filter (lambda (n) (and (fx>=? n low) (fx<=? n high))) set))
+
+(define (iset-open-closed-interval set low high)
+  (assume (valid-integer? low))
+  (assume (valid-integer? high))
+  (assume (fx>=? high low))
+  (iset-filter (lambda (n) (and (fx>? n low) (fx<=? n high))) set))
+
+(define (iset-closed-open-interval set low high)
+  (assume (valid-integer? low))
+  (assume (valid-integer? high))
+  (assume (fx>=? high low))
+  (iset-filter (lambda (n) (and (fx>=? n low) (fx<? n high))) set))
+
+(define (iset-range< set k)
+  (assume (valid-integer? k))
+  (iset-filter (lambda (n) (fx<? n k)) set))
+
+(define (iset-range<= set k)
+  (assume (valid-integer? k))
+  (iset-filter (lambda (n) (fx<=? n k)) set))
+
+(define (iset-range> set k)
+  (assume (valid-integer? k))
+  (iset-filter (lambda (n) (fx>? n k)) set))
+
+(define (iset-range>= set k)
+  (assume (valid-integer? k))
+  (iset-filter (lambda (n) (fx>=? n k)) set))
