@@ -1,7 +1,7 @@
 (import (scheme base)
         (iset-trie)
         (chibi test)
-        (only (srfi 1) iota any every last take-while drop-while)
+        (only (srfi 1) iota any every last take-while drop-while count)
         )
 
 ;;; Utility
@@ -25,7 +25,7 @@
 (define all-test-sets
   (list pos-set neg-set mixed-set dense-set sparse-set))
 
-(test-group "comparison"
+(test-group "Comparison"
   (test #t (iset=? (iset) (iset)))
   (test #f (iset=? (iset 1) (iset)))
   (test #f (iset=? (iset) (iset 1)))
@@ -33,7 +33,7 @@
   (test #f (iset=? (iset 1 2 3 4) (iset 2 3 4)))
   (test #f (iset=? pos-set neg-set)))
 
-(test-group "copying and conversion"
+(test-group "Copying and conversion"
   ;;; iset-copy 
   (test-assert (not (eqv? (iset-copy pos-set) pos-set)))
   (test-assert (every (lambda (set)
@@ -80,7 +80,7 @@
   (test-not (iset-disjoint? (make-iset-range 20 30) (make-iset-range 29 39)))
   )
 
-(test-group "updaters"
+(test-group "Updaters"
   (test '(1) (iset->list (iset-adjoin (iset) 1)))
   (test-assert (iset-contains? (iset-adjoin neg-set 10) 10))
   (test-assert (iset-contains? (iset-adjoin dense-set 100) 100))
@@ -126,7 +126,31 @@
                          (iset=? sparse-set* (list->iset (init sparse-seq))))))
   )
 
-(test-group "set theory"
+(test-group "Whole set operations"
+  (test 0 (iset-size (iset)))
+  (test (length pos-seq) (iset-size pos-set))
+  (test (length mixed-seq) (iset-size mixed-set))
+  (test (length sparse-seq) (iset-size sparse-set))
+
+  (test #f (iset-any? even? (iset)))
+  (test-assert (iset-any? even? pos-set))
+  (test-not (iset-any? negative? pos-set))
+  (test-assert (iset-any? (lambda (n) (> n 100)) sparse-set))
+  (test-not (iset-any? (lambda (n) (> n 100)) dense-set))
+
+  (test #t (iset-every? even? (iset)))
+  (test-not (iset-every? even? pos-set))
+  (test-assert (iset-every? negative? neg-set))
+  (test-not (iset-every? (lambda (n) (> n 100)) sparse-set))
+  (test-assert (iset-every? (lambda (n) (< n 100)) dense-set))
+
+  (test 0 (iset-count even? (iset)))
+  (test (count even? pos-seq) (iset-count even? pos-set))
+  (test (count even? neg-seq) (iset-count even? neg-set))
+  (test (count even? sparse-seq) (iset-count even? sparse-set))
+  )
+
+(test-group "Set theory"
   (test-equal iset=? mixed-set (iset-union! (iset) mixed-set))
   (test-equal iset=?
               (list->iset (append (iota 20 100 3) (iota 20 -100 3)))
