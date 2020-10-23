@@ -372,8 +372,9 @@
   (iset-filter (lambda (n) (fx<=? n k)) set))
 
 (define (iset-range> set k)
+  (assume (iset? set))
   (assume (valid-integer? k))
-  (iset-filter (lambda (n) (fx>? n k)) set))
+  (raw-iset (subtrie> (iset-trie set) k)))
 
 (define (iset-range>= set k)
   (assume (valid-integer? k))

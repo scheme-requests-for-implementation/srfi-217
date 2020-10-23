@@ -378,3 +378,24 @@
             (split (branch-right trie))
             (trie-union (split (branch-left trie)) (branch-right trie)))
         (split trie))))
+
+;; Return a trie containing all the elements of `trie' which are
+;; greater than k.
+(define (subtrie> trie k)
+  (letrec
+   ((split
+     (lambda (t)
+       (cond ((not t) #f)
+             ((integer? t) (and (fx>? t k) t))
+	     (else
+	      (let*-branch (((p m l r) t))
+		(if (match-prefix? k p m)
+		    (if (zero-bit? k m)
+			(trie-union (split l) r)
+			(split r))
+		    (and (fx>? p k) t))))))))
+    (if (and (branch? trie) (fxnegative? (branch-branching-bit trie)))
+	(if (fxnegative? k)
+	    (trie-union (split (branch-right trie)) (branch-left trie))
+	    (split (branch-left trie)))
+	(split trie))))
