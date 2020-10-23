@@ -360,12 +360,18 @@
                (else s))))))
     (difference trie1 trie2)))
 
-(define (subtrie< trie k)
+;; Return a trie containing all the elements of `trie' which are
+;; less than k, if `inclusive' is false, or less than or equal to
+;; k if `inclusive' is true.
+(define (subtrie< trie k inclusive)
   (letrec
     ((split
       (lambda (t)
         (cond ((not t) #f)
-              ((integer? t) (and (fx<? t k) t))
+	      ((integer? t)
+	       (cond ((fx<? t k) t)
+		     ((and (fx=? t k) inclusive) t)
+		     (else #f)))
               (else
                (let*-branch (((p m l r) t))
                  (if (match-prefix? k p m)
@@ -380,13 +386,17 @@
         (split trie))))
 
 ;; Return a trie containing all the elements of `trie' which are
-;; greater than k.
-(define (subtrie> trie k)
+;; greater than k, if `inclusive' is false, or greater than or equal
+;; to k if `inclusive' is true.
+(define (subtrie> trie k inclusive)
   (letrec
    ((split
      (lambda (t)
        (cond ((not t) #f)
-             ((integer? t) (and (fx>? t k) t))
+	     ((integer? t)
+	      (cond ((fx>? t k) t)
+		    ((and (fx=? t k) inclusive) t)
+		    (else #f)))
 	     (else
 	      (let*-branch (((p m l r) t))
 		(if (match-prefix? k p m)

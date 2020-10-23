@@ -364,18 +364,21 @@
   (iset-filter (lambda (n) (and (fx>=? n low) (fx<? n high))) set))
 
 (define (iset-range< set k)
+  (assume (iset? set))
   (assume (valid-integer? k))
-  (raw-iset (subtrie< (iset-trie set) k)))
+  (raw-iset (subtrie< (iset-trie set) k #f)))
 
 (define (iset-range<= set k)
+  (assume (iset? set))
   (assume (valid-integer? k))
-  (iset-filter (lambda (n) (fx<=? n k)) set))
+  (raw-iset (subtrie< (iset-trie set) k #t)))
 
 (define (iset-range> set k)
   (assume (iset? set))
   (assume (valid-integer? k))
-  (raw-iset (subtrie> (iset-trie set) k)))
+  (raw-iset (subtrie> (iset-trie set) k #f)))
 
 (define (iset-range>= set k)
+  (assume (iset? set))
   (assume (valid-integer? k))
-  (iset-filter (lambda (n) (fx>=? n k)) set))
+  (raw-iset (subtrie> (iset-trie set) k #t)))
