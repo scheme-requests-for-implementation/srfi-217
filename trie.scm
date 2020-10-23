@@ -129,6 +129,9 @@
         ((not trie2) trie1)
         (else (branch prefix mask trie1 trie2))))
 
+(define (trie-union s t)
+  (trie-merge trie-insert s t))
+
 (define (copy-trie trie)
   (and trie
        (if (integer? trie)
@@ -356,3 +359,22 @@
                     (difference s tr)))
                (else s))))))
     (difference trie1 trie2)))
+
+(define (subtrie< trie k)
+  (letrec
+    ((split
+      (lambda (t)
+        (cond ((not t) #f)
+              ((integer? t) (and (fx<? t k) t))
+              (else
+               (let*-branch (((p m l r) t))
+                 (if (match-prefix? k p m)
+                     (if (zero-bit? k m)
+                         (split l)
+                         (trie-union l (split r)))
+                     (and (fx<? p k) t))))))))
+    (if (and (branch? trie) (fxnegative? (branch-branching-bit trie)))
+        (if (fxnegative? k)
+            (split (branch-right trie))
+            (trie-union (split (branch-left trie)) (branch-right trie)))
+        (split trie))))
