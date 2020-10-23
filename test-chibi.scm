@@ -21,6 +21,7 @@
 (define sparse-seq (iota 20 -10000 1003))
 
 (define pos-set (list->iset pos-seq))
+(define pos-set+ (iset-adjoin pos-set 9))
 (define neg-set (list->iset neg-seq))
 (define mixed-set (list->iset mixed-seq))
 (define dense-set (make-iset-range 0 49))
@@ -29,7 +30,8 @@
 (define all-test-sets
   (list pos-set neg-set mixed-set dense-set sparse-set))
 
-(test-group "Comparison"
+;; Most other test groups use iset=?, so test this first.
+(test-group "iset=?"
   (test #t (iset=? (iset) (iset)))
   (test #f (iset=? (iset 1) (iset)))
   (test #f (iset=? (iset) (iset 1)))
@@ -195,6 +197,25 @@
   (test-equal iset=?
               (list->iset (remove even? mixed-seq))
               (iset-remove even? mixed-set))
+  )
+
+(test-group "Comparison"
+  (test-assert (iset<? (iset) pos-set))
+  (test-assert (iset<? pos-set pos-set+))
+  (test-not    (iset<? pos-set pos-set))
+  (test-not    (iset<? pos-set+ pos-set))
+  (test-assert (iset<=? (iset) pos-set))
+  (test-assert (iset<=? pos-set pos-set+))
+  (test-assert (iset<=? pos-set pos-set))
+  (test-not    (iset<=? pos-set+ pos-set))
+  (test-not    (iset>? (iset) pos-set))
+  (test-not    (iset>? pos-set pos-set+))
+  (test-not    (iset>? pos-set pos-set))
+  (test-assert (iset>? pos-set+ pos-set))
+  (test-not    (iset>=? (iset) pos-set))
+  (test-not    (iset>=? pos-set pos-set+))
+  (test-assert (iset>=? pos-set pos-set))
+  (test-assert (iset>=? pos-set+ pos-set))
   )
 
 (test-group "Set theory"
