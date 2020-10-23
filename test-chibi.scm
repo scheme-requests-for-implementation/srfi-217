@@ -1,7 +1,8 @@
 (import (scheme base)
         (iset-trie)
         (chibi test)
-        (only (srfi 1) iota any every last take-while drop-while count)
+        (only (srfi 1) iota any every last take-while drop-while count
+                       fold filter remove)
         )
 
 ;;; Utility
@@ -10,6 +11,9 @@
   (if (null? (cdr xs))
       '()
       (cons (car xs) (init (cdr xs)))))
+
+(define (constantly x)
+  (lambda (_) x))
 
 (define pos-seq (iota 20 100 3))
 (define neg-seq (iota 20 -100 3))
@@ -148,6 +152,49 @@
   (test (count even? pos-seq) (iset-count even? pos-set))
   (test (count even? neg-seq) (iset-count even? neg-set))
   (test (count even? sparse-seq) (iset-count even? sparse-set))
+  )
+
+(test-group "Iterators"
+  (test (fold + 0 pos-seq) (iset-fold + 0 pos-set))
+  (test (fold + 0 sparse-seq) (iset-fold + 0 sparse-set))
+  (test (iset-size neg-set) (iset-fold (lambda (_ c) (+ c 1)) 0 neg-set))
+
+  ;;; iset-map
+
+  (test-assert iset-empty? (iset-map values (iset)))
+  (test-equal iset=? pos-set (iset-map values pos-set))
+  (test-equal iset=?
+              (list->iset (map (lambda (n) (* n 2)) mixed-seq))
+              (iset-map (lambda (n) (* n 2)) mixed-set))
+  (test-equal iset=? (iset 1) (iset-map (constantly 1) pos-set))
+
+  ;;; iset-for-each
+
+  (test (iset-size mixed-set)
+        (let ((n 0))
+          (iset-for-each (lambda (_) (set! n (+ n 1))) mixed-set)
+          n))
+  (test (fold + 0 sparse-seq)
+        (let ((sum 0))
+          (iset-for-each (lambda (n) (set! sum (+ sum n))) sparse-set)
+          sum))
+
+  ;;; filter & remove
+
+  (test-assert (iset-empty? (iset-filter (constantly #f) pos-set)))
+  (test-equal iset=?
+              pos-set
+              (iset-filter (constantly #t) pos-set))
+  (test-equal iset=?
+              (list->iset (filter even? mixed-seq))
+              (iset-filter even? mixed-set))
+  (test-assert (iset-empty? (iset-remove (constantly #t) pos-set)))
+  (test-equal iset=?
+              pos-set
+              (iset-remove (constantly #f) pos-set))
+  (test-equal iset=?
+              (list->iset (remove even? mixed-seq))
+              (iset-remove even? mixed-set))
   )
 
 (test-group "Set theory"
