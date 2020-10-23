@@ -2,7 +2,7 @@
         (iset-trie)
         (chibi test)
         (only (srfi 1) iota any every last take-while drop-while count
-                       fold filter remove)
+                       fold filter remove last)
         )
 
 ;;; Utility
@@ -84,6 +84,20 @@
   (test-assert (iset-disjoint? (iset) pos-set))
   (test-not (iset-disjoint? dense-set sparse-set))
   (test-not (iset-disjoint? (make-iset-range 20 30) (make-iset-range 29 39)))
+  )
+
+(test-group "Accessors"
+  (test-not (iset-min (iset)))
+  (test 1 (iset-min (iset 1 2 3)))
+  (test (car pos-seq) (iset-min pos-set))
+  (test (car neg-seq) (iset-min neg-set))
+  (test (car mixed-seq) (iset-min mixed-set))
+
+  (test-not (iset-max (iset)))
+  (test 3 (iset-max (iset 1 2 3)))
+  (test (last pos-seq) (iset-max pos-set))
+  (test (last neg-seq) (iset-max neg-set))
+  (test (last mixed-seq) (iset-max mixed-set))
   )
 
 (test-group "Updaters"
