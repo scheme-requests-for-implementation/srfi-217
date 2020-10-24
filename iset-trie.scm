@@ -343,7 +343,7 @@
   (assume (valid-integer? low))
   (assume (valid-integer? high))
   (assume (fx>=? high low))
-  (iset-filter (lambda (n) (and (fx>? n low) (fx<? n high))) set))
+  (raw-iset (subtrie-interval (iset-trie set) low high)))
 
 (define (iset-closed-interval set low high)
   (assume (valid-integer? low))

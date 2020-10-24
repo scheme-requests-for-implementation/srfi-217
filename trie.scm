@@ -409,3 +409,37 @@
 	    (trie-union (split (branch-right trie)) (branch-left trie))
 	    (split (branch-left trie)))
 	(split trie))))
+
+;; Return a trie containing all the elements of `trie' which are
+;; greater than a and less than b.
+(define (subtrie-interval trie a b)
+  (letrec
+   ((interval
+     (lambda (t)
+       (cond ((not t) #f)
+             ((integer? t) (and (fx>? t a) (fx<? t b) t))
+             (else (branch-interval t)))))
+    (branch-interval
+     (lambda (t)
+       (let*-branch (((p m l r) t))
+         (if (match-prefix? a p m)
+             (if (zero-bit? a m)
+                 (if (match-prefix? b p m)
+                     (if (zero-bit? b m)
+                         (interval l)  ; all x < b is in l
+                         (trie-union (subtrie> l a #f)
+                                     (subtrie< r b #f)))
+                     ;; everything or nothing is less than b
+                     (and (fx<? b p) (trie-union (subtrie> l a #f) r)))
+                 (interval r)) ; all x > b is in r
+             ;; everything or nothing is greater than a
+             (and (fx>? p a) (subtrie< t b #f)))))))
+    (if (and (branch? trie) (fxnegative? (branch-branching-bit trie)))
+	(cond ((and (fxnegative? a) (fxnegative? b))
+	       (interval (branch-right trie)))
+	      ((and (fxpositive? a) (fxpositive? b))
+	       (interval (branch-left trie)))
+	      ;; (a, 0) U (0, b)
+	      (else (trie-union (subtrie> (branch-right trie) a #f)
+	                        (subtrie< (branch-left trie) b #f))))
+	(interval trie))))
