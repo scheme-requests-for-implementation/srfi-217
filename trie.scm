@@ -411,13 +411,17 @@
 	(split trie))))
 
 ;; Return a trie containing all the elements of `trie' which are
-;; greater than a and less than b.
-(define (subtrie-interval trie a b)
+;; greater than/greater than or equal to a and less than/less than
+;; or equal to b, depending on the truth values of
+;; low-/high-inclusive.
+(define (subtrie-interval trie a b low-inclusive high-inclusive)
   (letrec
    ((interval
      (lambda (t)
        (cond ((not t) #f)
-             ((integer? t) (and (fx>? t a) (fx<? t b) t))
+             ((integer? t) (and ((if low-inclusive fx>=? fx>?) t a)
+                                ((if high-inclusive fx<=? fx<?) t b)
+                                t))
              (else (branch-interval t)))))
     (branch-interval
      (lambda (t)
@@ -427,19 +431,20 @@
                  (if (match-prefix? b p m)
                      (if (zero-bit? b m)
                          (interval l)  ; all x < b is in l
-                         (trie-union (subtrie> l a #f)
-                                     (subtrie< r b #f)))
+                         (trie-union (subtrie> l a low-inclusive)
+                                     (subtrie< r b high-inclusive)))
                      ;; everything or nothing is less than b
-                     (and (fx<? b p) (trie-union (subtrie> l a #f) r)))
+                     (and (fx<? b p)
+                          (trie-union (subtrie> l a low-inclusive) r)))
                  (interval r)) ; all x > b is in r
              ;; everything or nothing is greater than a
-             (and (fx>? p a) (subtrie< t b #f)))))))
+             (and (fx>? p a) (subtrie< t b high-inclusive)))))))
     (if (and (branch? trie) (fxnegative? (branch-branching-bit trie)))
 	(cond ((and (fxnegative? a) (fxnegative? b))
 	       (interval (branch-right trie)))
 	      ((and (fxpositive? a) (fxpositive? b))
 	       (interval (branch-left trie)))
 	      ;; (a, 0) U (0, b)
-	      (else (trie-union (subtrie> (branch-right trie) a #f)
-	                        (subtrie< (branch-left trie) b #f))))
+	      (else (trie-union (subtrie> (branch-right trie) a low-inclusive)
+	                        (subtrie< (branch-left trie) b high-inclusive))))
 	(interval trie))))
