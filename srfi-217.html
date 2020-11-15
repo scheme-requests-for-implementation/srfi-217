@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>SRFI 217: Integer Sets</title>
+    <link href="/favicon.png" rel="icon" sizes="192x192" type="image/png">
+    <link rel="stylesheet" href="https://srfi.schemers.org/srfi.css" type="text/css">
+    <meta name="viewport" content="width=device-width, initial-scale=1"></head>
+  <body>
+    <h2><a href="https://srfi.schemers.org/"><img class="srfi-logo" src="https://srfi.schemers.org/srfi-logo.svg" alt="SRFI logo" /></a>217: Integer Sets</h2>
+
+<p>by John Cowan (text), Wolfgang Corcoran-Mathe (implementation)</p>
+
+<p>
+<h2>Status</h2>
+
+<p>This SRFI is currently in <emdraft</em> status.  Here is <a href="https://srfi.schemers.org/srfi-process.html">an explanation</a> of each status that a SRFI can hold.  To provide input on this SRFI, please send email to <code><a href="mailto:srfi+minus+217+at+srfi+dotschemers+dot+org">srfi-217@<span class="antispam">nospam</span>srfi.schemers.org</a></code>.  To subscribe to the list, follow <a href="https://srfi.schemers.org/srfi-list-subscribe.html">these instructions</a>.  You can access previous messages via the mailing list <a href="https://srfi-email.schemers.org/srfi-217">archive</a>.</p>
+<h2>Abstract</h2><p><em>Integer isets</em> are unordered collections of fixnums; that is, exact integers within certain implementation-specified bounds.
+
+</p>
+
+<h2>Rationale</h2>
+
+<p>While it is perfectly practical to store integers in
+ <a href="https://srfi.schemers.org/srfi-113/srfi-113">SRFI 113 isets</a>,
+other algorithms can be used to represent isets of integers.
+This SRFI is almost a drop-in replacement for SRFI 113, except that
+except that iset is replaced by <code><code>iset</code></code>
+in their names. However, comparators are not useful
+for integer isets, and in <code>iset</code>, <code>iset-unfold</code>,
+<code>iset-map</code>, and <code>iset-copy</code> the comparator
+argument is omitted.
+
+<h2>Specification</h2>
+
+<p>Integer isets are disjoint from other types of Scheme objects.</p>
+
+<p>It is an error to add or remove an object for a integer iset while iterating over it.</p>
+
+<h2>Linear update</h2>
+
+<p>The procedures of this SRFI, by default, are "pure functional" — they do not alter their parameters. However, this SRFI also defines "linear-update" procedures, all of whose names end in <code>!</code>.  They have hybrid pure-functional/side-effecting semantics: they are allowed, but not required, to side-effect one of their parameters in order to construct their result. An implementation may legally implement these procedures as pure, side-effect-free functions, or it may implement them using side effects, depending upon the details of what is the most efficient or simple to implement in terms of the underlying representation.</p>
+
+<p>It is an error to rely upon these procedures working by side effect. For example, this is not guaranteed to work:</p>
+
+<pre>
+        (let* ((iset1 (iset 'a 'b 'c))      ; iset1 = {a,b,c}.
+               (iset2 (iset-adjoin! iset1 'd)))   ; Add d to {a,b,c}.
+          iset1) ; Could be either {a,b,c} or {a,b,c,d}.
+</pre>
+
+<p>However, this is well-defined:</p>
+
+<pre>
+        (let ((iset1 (iset 'a 'b 'c)))
+          (iset-adjoin! iset1 'd)) ; Add d to {a,b,c}.
+</pre>
+  
+<p>So clients of these procedures write in a functional style, but must additionally be sure that, when the procedure is called, there are no other live pointers to the potentially-modified iset or bag (hence the term "linear update").</p>
+
+<p>There are two benefits to this convention:</p>
+
+<ul><li><p>Implementations are free to provide the most efficient possible implementation, either functional or side-effecting.</p></li>
+
+<li><p>Programmers may nonetheless continue to assume that isets are purely functional data structures: they may be reliably shared without needing to be copied, uniquified, and so forth.</p></li></ul>
+
+<p>In practice, these procedures are most useful for efficiently constructing isets in a side-effecting manner, in some limited local context, before passing the iset or bag outside the local construction scope to be used in a functional manner.</p>
+
+<p>Scheme provides no assistance in checking the linearity of the potentially side-effected parameters passed to these functions — there's no linear type checker or run-time mechanism for detecting violations.</p>
+
+<p>Note that if an implementation uses no side effects at all, it is allowed to return existing isets rather than newly allocated ones, even where this SRFI explicitly says otherwise.</p>
+
+<h2 id="Index">Index</h2>
+
+<ul><li><p><a href="#Constructors">Constructors</a>: <code>iset</code>, <code>iset-unfold</code></p>
+</li><li><p><a href="#Predicates">Predicates</a>: <code>iset?</code>, <code>iset-contains?</code>, <code>iset-empty?</code>, <code>iset-disjoint?</code></p>
+</li><li><p><a href="#Accessors">Accessors</a>: <code>iset-member</code>, <code>iset-min</code>, <code>iset-max</code></p>
+</li><li><p><a href="#Updaters">Updaters</a>: <code>iset-adjoin</code>, <code>iset-adjoin!</code>, <code>iset-replace</code>, <code>iset-replace!</code>, <code>iset-delete</code>, <code>iset-delete!</code>, <code>iset-delete-all</code>, <code>iset-delete-all!</code>, <code>iset-search!</code></p>
+</li><li><p><a href="#Thewholeiset">The whole iset</a>: <code>iset-size</code>, <code>iset-find</code>, <code>iset-count</code>, <code>iset-any?</code>, <code>iset-every?</code></p>
+</li><li><p><a href="#Mappingandfolding">Mapping and folding</a>: <code>iset-map</code>, <code>iset-for-each</code>, <code>iset-fold</code>, <code>iset-filter</code>, <code>iset-filter!</code>, <code>iset-remove</code>, <code>iset-remove!</code>, <code>iset-partition</code>, <code>iset-partition!</code></p>
+</li><li><p><a href="#Copyingandconversion">Copying and conversion</a>: <code>iset-copy</code>, <code>make-iset-range</code>, <code>iset-&gt;list</code>, <code>list-&gt;iset</code>, <code>list-&gt;iset!</code></p>
+</li><li><p><a href="#Subsets">Subsets</a>: <code>iset=?</code>, <code>iset&lt;?</code>, <code>iset&gt;?</code>, <code>iset&lt;=?</code>, <code>iset&gt;=?</code></p>
+</li><li><p><a href="#Settheoryoperations">Set theory operations</a>: <code>iset-union</code>, <code>iset-intersection</code>, <code>iset-difference</code>, <code>iset-xor</code>, <code>iset-union!</code>, <code>iset-intersection!</code>, <code>iset-difference!</code>, <code>iset-xor!</code></p>
+</li><li><p><a href="#Intervalsandranges">Intervals and ranges</a>:
+<code>iset-open-interval</code>, <code>iset-closed-interval</code>, <code>iset-open-closed-interval</code>, <code>iset-closed-open-interval</code>, <code>iset-range=?</code>, <code>iset-range&lt;?</code>, <code>iset-range&lt;=?</code>, <code>iset-range&gt;?</code>, <code>iset-range&gt;=?</code>
+</li>
+
+</ul>
+
+<h2 id="Constructors">Constructors</h2>
+
+<p><code>(iset </code> <em>element</em> ... <code>)</code></p>
+
+<p>Returns a newly allocated iset.  The <em>elements</em> are used to initialize the iset.</p>
+
+<p><code>(iset-unfold </code><em>stop? mapper successor seed</em><code>)</code></p>
+
+<p>Create a newly allocated iset as if by <code>iset</code>.  If the result of applying the predicate <em>stop?</em> to <em>seed</em> is true, return the iset.  Otherwise, apply the procedure <em>mapper</em> to <em>seed</em>.  The value that <em>mapper</em> returns is added to the iset.  Then get a new seed by applying the procedure <em>successor</em> to <em>seed</em>, and repeat this algorithm.</p>
+
+<h2 id="Predicates">Predicates</h2>
+
+<p><code>(iset? </code><em>obj</em><code>)</code></p>
+
+<p>Returns <code>#t</code> if <em>obj</em> is a iset, and <code>#f</code> otherwise.</p>
+
+<p><code>(iset-contains? </code><em>iset element</em><code>)</code></p>
+
+<p>Returns <code>#t</code> if <em>element</em> is a member of <em>iset</em> and <code>#f</code> otherwise.</p>
+
+<p><code>(iset-empty? </code><em>iset</em><code>)</code></p>
+
+<p>Returns <code>#t</code> if <em>iset</em> has no elements and <code>#f</code> otherwise.</p>
+
+<p><code>(iset-disjoint? </code><em>iset<sub>1</sub> iset<sub>2</sub></em><code>)</code></p>
+
+<p>Returns <code>#t</code> if <em>iset<sub>1</sub></em> and <em>iset<sub>2</sub></em> have no elements in common and <code>#f</code> otherwise.</p>
+
+<h2 id="Accessors">Accessors</h2>
+
+<p><code>(iset-member </code><em>iset element default</em><code>)</code></p>
+
+<p>Returns the element of <em>iset</em> that is equal, in the sense of <em>iset's</em> equality predicate, to <em>element</em>.  If <em>element</em> is not a member of <em>iset</em>, <em>default</em> is returned.</p>
+
+</p><p><code>(iset-min </code><em>iset</em><code>)</code><br/>
+<code>(iset-max </code><em>iset</em><code>)</code></p><p>
+
+Returns the smallest or largest integer in <em>iset</em>, or <code>#f</code> if there is none.
+
+<h2 id="Updaters">Updaters</h2>
+
+<p><code>(iset-adjoin </code><em>iset element</em> ...<code>)</code></p>
+
+<p>The <code>iset-adjoin</code> procedure returns a newly allocated iset that contains all the values of <em>iset</em>, and in addition each <em>element</em> unless it is already equal to one of the existing or newly added members.</p>
+
+<p><code>(iset-adjoin! </code><em>iset element</em> ...<code>)</code></p>
+
+<p>The <code>iset-adjoin!</code> procedure is the same as <code>iset-adjoin</code>, except that it is permitted to mutate and return the <em>iset</em> argument rather than allocating a new iset.</p>
+
+<p><code>(iset-replace </code><em>iset element</em><code>)</code></p>
+
+<p>The <code>iset-replace</code> procedure returns a newly allocated iset that contains all the values of <em>iset</em> except as follows:  If <i>element</i> is equal to an existing member of <i>iset</i>, then that member is omitted and replaced by <i>element</i>.  If there is no such element in <i>iset</i>, then <i>iset</i> is returned unchanged.</p>
+
+<p><code>(iset-replace! </code><em>iset element</em><code>)</code></p>
+
+<p>The <code>iset-replace!</code> procedure is the same as<code>iset-replace</code>, except that it is permitted to mutate and return the <em>iset</em> argument rather than allocating a new iset.</p>
+
+<p><code>(iset-delete </code><em>iset element</em> ...<code>)</code></p>
+
+<p><code>(iset-delete! </code><em>iset element</em> ...<code>)</code></p>
+
+<p><code>(iset-delete-all </code><em>iset element-list</em><code>)</code></p>
+
+<p><code>(iset-delete-all! </code><em>iset element-list</em><code>)</code></p>
+
+<p>The <code>iset-delete</code> procedure returns a newly allocated iset containing all the values of <em>iset</em> except for any that are equal to one or more of the <em>elements</em>.  Any <em>element</em> that is not equal to some member of the iset is ignored.</p>
+
+<p>The <code>iset-delete!</code> procedure is the same as <code>iset-delete</code>, except that it is permitted to mutate and return the <em>iset</em> argument rather than allocating a new iset.</p>
+
+<p>The <code>iset-delete-all</code> and <code>iset-delete-all!</code> procedures are the same as <code>iset-delete</code> and <code>iset-delete!</code>, except that they accept a single argument which is a list of elements to be deleted.</p>
+
+<p><code>(iset-search! </code><em>iset element failure success</em><code>)</code></p>
+
+<p>The <em>iset</em> is searched for <em>element</em>.  If it is not found, then the <em>failure</em> procedure is tail-called with two continuation arguments, <em>insert</em> and <em>ignore</em>, and is expected to tail-call one of them.  If <em>element</em> is found, then the <em>success</em> procedure is tail-called with the matching element of <em>iset</em> and two continuations, <em>update</em> and <em>remove</em>, and is expected to tail-call one of them.</p>
+
+<p>The effects of the continuations are as follows (where <em>obj</em> is any Scheme object):</p>
+
+<ul>
+<li><p>Invoking <code>(</code><em>insert obj</em><code>)</code> causes <em>element</em> to be inserted into <em>iset</em>.</p></li>
+<li><p>Invoking <code>(</code><em>ignore obj</em><code>)</code> causes <em>iset</em> to remain unchanged.</p></li>
+<li><p>Invoking <code>(</code><em>update new-element obj</em><code>)</code> causes <em>new-element</em> to be inserted into <em>iset</em> in place of <i>element</i>.</p></li>
+<li><p>Invoking <code>(</code><em>remove obj</em><code>)</code> causes the matching element of <em>iset</em> to be removed from it.</p></li>
+</ul>
+
+<p>In all cases, two values are returned: the possibly updated <em>iset</em> and <em>obj</em>.</p>
+
+<h2 id="Thewholeset">The whole iset</h2><p><code>(iset-size </code><em>iset</em><code>)</code></p><p>
+
+Returns the number of elements in <em>iset</em> as an exact integer.
+
+</p><p><code>(iset-find </code><em>predicate iset failure</em><code>)</code></p><p>
+
+Returns an arbitrarily chosen element of <em>iset</em> that satisfies <em>predicate</em>, or the result of invoking <em>failure</em> with no arguments if there is none.
+</p><p><code>(iset-count </code><em>predicate iset</em><code>)</code></p><p>
+
+Returns the number of elements of <em>iset</em> that satisfy <em>predicate</em> as an exact integer.
+
+</p><p><code>(iset-any? </code><em>predicate iset</em><code>)</code></p><p>
+
+Returns <code>#t</code> if any element of <em>iset</em> satisfies <em>predicate</em>, or <code>#f</code> otherwise.  Note that this differs from the SRFI 1 analogue because it does not return an element of the iset.
+
+</p><p><code>(iset-every? </code><em>predicate iset</em><code>)</code></p><p>
+
+Returns <code>#t</code> if every element of <em>iset</em> satisfies <em>predicate</em>, or <code>#f</code> otherwise.  Note that this differs from the SRFI 1 analogue because it does not return an element of the iset.  
+
+</p>
+
+<h2 id="Mappingandfolding">Mapping and folding</h2>
+
+<p><code>(iset-map </code><em>proc iset</em><code>)</code></p>
+
+<p>Applies <em>proc</em> to each element of <em>iset</em> in arbitrary order and returns a newly allocated iset, created as if by <code>iset</code>, which contains the results of the applications.  For example:</p>
+
+<pre>
+        (iset-map number-&gt;string (iset 1 11 21))
+             =&gt; (iset "1" "2" "3")
+</pre>
+
+<pre>
+(iset-map (lambda (x) (quotient x 2))
+         (iset 1 2 3 4 5))
+ => (iset 0 1 2)
+</pre>
+
+<p><code>(iset-for-each </code><em>proc iset</em><code>)</code></p>
+
+<p>Applies <em>proc</em> to <em>iset</em> in arbitrary order, discarding the returned values.  Returns an unspecified result.</p>
+
+<p><code>(iset-fold </code><em>proc nil iset</em><code>)</code></p>
+
+<p>Invokes <em>proc</em> on each member of <em>iset</em> in arbitrary order, passing the result of the previous invocation as a second argument.  For the first invocation, <em>nil</em> is used as the second argument.  Returns the result of the last invocation, or <em>nil</em> if there was no invocation.</p>
+
+<p><code>(iset-filter </code><em>predicate iset</em><code>)</code></p>
+
+<p>Returns a newly allocated iset containing just the elements of <em>iset</em> that satisfy <em>predicate</em>.</p>
+
+<p><code>(iset-filter! </code><em>predicate iset</em><code>)</code></p>
+
+<p>A linear update procedure that returns a iset containing just the elements of <em>iset</em> that satisfy <em>predicate</em>.</p>
+
+<p><code>(iset-remove </code><em>predicate iset</em><code>)</code></p>
+
+<p>Returns a newly allocated iset containing just the elements of <em>iset</em> that do not satisfy <em>predicate</em>.</p>
+
+<p><code>(iset-remove! </code><em>predicate iset</em><code>)</code></p>
+
+<p>A linear update procedure that returns a iset containing just the elements of <em>iset</em> that do not satisfy <em>predicate</em>.</p>
+
+<p><code>(iset-partition </code><em>predicate iset</em><code>)</code></p>
+
+<p>Returns two values: a newly allocated iset that contains just the elements of <em>iset</em> that satisfy <em>predicate</em> and another newly allocated iset that contains just the elements of <em>iset</em> that do not satisfy <em>predicate</em>.</p>
+
+<p><code>(iset-partition! </code><em>predicate iset</em><code>)</code></p>
+
+<p>A linear update procedure that returns two isets containing the elements of <em>iset</em> that do and do not, respectively, not satisfy <em>predicate</em>.</p>
+
+<h2 id="Copyingandconversion">Copying and conversion</h2>
+
+<p><code>(iset-copy </code><em>iset</em><code>)</code></p><p>
+
+Returns a newly allocated iset containing the elements of <em>iset</em>.
+
+</p><p><code>(iset-&gt;list </code><em>iset</em><code>)</code></p><p>
+
+Returns a newly allocated list containing the members of <em>iset</em> in unspecified order.
+
+</p><p><code>(list-&gt;iset </code><em>list</em><code>)</code></p><p>
+
+Returns a newly allocated iset, created as if by <code>iset</code>, that contains the elements of <em>list</em>.  Duplicate elements are omitted.
+
+</p><p><code>(list-&gt;iset! </code><em>iset list</em><code>)</code></p><p>
+
+Returns a iset that contains the elements of both <em>iset</em> and <em>list</em>.  Duplicate elements are omitted.
+
+</p><h2 id="Subsets">Subsets</h2>
+
+<p>
+  Note: None of these predicates produces a total order on
+  isets.  In particular, <code>iset=?</code>,
+  <code>iset&lt;?</code>, and <code>iset&gt;?</code> do not obey
+  the trichotomy law.
+</p>
+
+<p><code>(iset=? </code><em>iset<sub>1</sub> iset<sub>2</sub></em> ...<code>)</code>
+
+</p><p>
+
+Returns <code>#t</code> if each <em>iset</em> contains the same elements.
+
+</p><p><code>(iset&lt;? </code><em>iset<sub>1</sub> iset<sub>2</sub></em> ...<code>)</code>
+
+</p><p>
+
+Returns <code>#t</code> if each <em>iset</em> other than the last is a proper subset of the following <em>iset</em>, and <code>#f</code> otherwise.
+
+</p><p><code>(iset&gt;? </code><em>iset<sub>1</sub> iset<sub>2</sub></em> ...<code>)</code>
+
+</p><p>
+
+Returns <code>#t</code> if each <em>iset</em> other than the last is a proper superset of the following <em>iset</em>, and <code>#f</code> otherwise.
+
+</p><p><code>(iset&lt;=? </code><em>iset<sub>1</sub> iset<sub>2</sub></em> ...<code>)</code>
+
+</p><p>
+
+Returns <code>#t</code> if each <em>iset</em> other than the last is a subset of the following <em>iset</em>, and <code>#f</code> otherwise.
+
+</p><p><code>(iset&gt;=? </code><em>iset<sub>1</sub> iset<sub>2</sub></em> ...<code>)</code>
+
+</p><p>
+
+Returns <code>#t</code> if each <em>iset</em> other than the last is a superset of the following <em>iset</em>, and <code>#f</code> otherwise.
+
+</p>
+
+<h2 id="Settheoryoperations">Set theory operations</h2><p><code>(iset-union </code><em>iset<sub>1</sub> iset<sub>2</sub></em> ...<code>)</code>
+
+</p><p><code>(iset-intersection </code><em>iset<sub>1</sub> iset<sub>2</sub></em> ...<code>)</code>
+
+</p><p><code>(iset-difference </code><em>iset<sub>1</sub> iset<sub>2</sub></em> ...<code>)</code>
+
+</p><p><code>(iset-xor </code><em>iset<sub>1</sub> iset<sub>2</sub></em><code>)</code></p><p>
+
+Return a newly allocated iset that is the union, intersection, asymmetric difference, or symmetric difference of the <em>isets</em>.  Asymmetric difference is extended to more than two isets by taking the difference between the first iset and the union of the others.  Symmetric difference is not extended beyond two isets.  Elements in the result iset are drawn from the first iset in which they appear.
+
+</p><p><code>(iset-union! </code><em>iset<sub>1</sub> iset<sub>2</sub></em> ...<code>)</code>
+
+</p><p><code>(iset-intersection! </code><em>iset<sub>1</sub> iset<sub>2</sub></em> ...<code>)</code>
+
+</p><p><code>(iset-difference! </code><em>iset<sub>1</sub> iset<sub>2</sub></em> ...<code>)</code>
+
+</p><p><code>(iset-xor! </code><em>iset<sub>1</sub> iset<sub>2</sub></em><code>)</code></p>  
+
+<p>Linear update procedures returning a iset that is the union, intersection, asymmetric difference, or symmetric difference of the <em>isets</em>.  Asymmetric difference is extended to more than two isets by taking the difference between the first iset and the union of the others.  Symmetric difference is not extended beyond two isets.  Elements in the result iset are drawn from the first iset in which they appear.</p>
+
+<h2 id="Intervalsandranges">Intervals and ranges</h2><p>
+</p><p><code>(iset-open-interval </code><em>iset low high</em><code>)</code>
+</p><p><code>(iset-closed-interval </code><em>iset low high</em><code>)</code>
+</p><p><code>(iset-open-closed-interval </code><em>iset low high</em><code>)</code>
+</p><p><code>(iset-closed-open-interval </code><em>iset low high</em><code>)</code>
+<p>
+
+Procedures that return a subset of <em>iset</em> contained in the interval from <em>low</em>
+to <em>high</em>.  The interval may be open, closed, open below and closed above, or open above and
+closed below.
+
+</p><p><code>(iset-range= </code><em>iset k</em><code>)</code>
+</p><p><code>(iset-range&lt; </code><em>iset k</em><code>)</code>
+</p><p><code>(iset-range&lt;= </code><em>iset k</em><code>)</code>
+</p><p><code>(iset-range> </code><em>iset k</em><code>)</code>
+</p><p><code>(iset-range>= </code><em>iset k</em><code>)</code>
+<p>
+
+Procedures that return an integer set containing the elements of <em>iset</em> that are equal
+to, less than, less than or equal to, greater than, or greater than or equal to <em>k</em>.
+Note that the result <code>iset-range=</code> contains at most one element.
+
+</p><h2>Implementation</h2>
+
+
+<p>The sample implementation is found in the repository of this SRFI,
+and places the identifiers of this SRFI into the <code>iset-trie</code> library.</p>
+
+<p>The implementation is based on the Patricia tree approach described by
+Chris Okasaki and Andrew Gill (paper linked in the README), which is
+also used by Haskell's IntMap library.  It provides fast lookup and
+set-theoretical operations: (iset-contains SET N) runs in time linear
+to the two's-complement integer length of N, and union, intersection,
+etc. of two sets run in O(n+m) time.  A few benchmarks show that
+they're at least as fast as Chibi's binary tree version in most
+cases.
+
+<h2>Copyright</h2>
+
+<p>Copyright &copy; John Cowan, Wolfgang Corcoran-Mathe 2020.</p> 
+
+<p>Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the "Software"),
+to deal in the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following conditions:</p>
+
+<p>The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.</p>
+
+<p>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.</p>
+
+    <hr/>
+  <address>Editor: <a href="mailto:srfi-editors+at+srfi+dot+schemers+dot+org">Arthur A. Gleckler</a></address></body></html>
