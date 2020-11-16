@@ -14,18 +14,43 @@
 <p>
 <h2>Status</h2>
 
-<p>This SRFI is currently in <emdraft</em> status.  Here is <a href="https://srfi.schemers.org/srfi-process.html">an explanation</a> of each status that a SRFI can hold.  To provide input on this SRFI, please send email to <code><a href="mailto:srfi+minus+217+at+srfi+dotschemers+dot+org">srfi-217@<span class="antispam">nospam</span>srfi.schemers.org</a></code>.  To subscribe to the list, follow <a href="https://srfi.schemers.org/srfi-list-subscribe.html">these instructions</a>.  You can access previous messages via the mailing list <a href="https://srfi-email.schemers.org/srfi-217">archive</a>.</p>
-<h2>Abstract</h2><p><em>Integer isets</em> are unordered collections of fixnums; that is, exact integers within certain implementation-specified bounds.
+<p>This SRFI is currently in <em>draft</em> status.  Here is <a href="https://srfi.schemers.org/srfi-process.html">an explanation</a> of each status that a SRFI can hold.  To provide input on this SRFI, please send email to <code><a href="mailto:srfi+minus+217+at+srfi+dotschemers+dot+org">srfi-217@<span class="antispam">nospam</span>srfi.schemers.org</a></code>.  To subscribe to the list, follow <a href="https://srfi.schemers.org/srfi-list-subscribe.html">these instructions</a>.  You can access previous messages via the mailing list <a href="https://srfi-email.schemers.org/srfi-217">archive</a>.</p>
+<ul>
+  <li>Received: 2020-11-14</li>
+  <li>60-day deadline: 2021-01-14</li>
+  <li>John Cowan's <a href="https://github.com/johnwcowan/srfi-217">personal
+       Git repo for this SRFI</a> for reference while the SRFI is in
+       <em>draft</em> status (<a href="https://htmlpreview.github.io/?https://github.com/johnwcowan/srfi-217/blob/main/srfi-217.html">preview</a>)</li>
+</ul>
+
+<h2>Abstract</h2>
+
+<p><em>Integer isets</em> are unordered collections of fixnums; that is, exact integers within certain implementation-specified bounds.
 
 </p>
+
+<h2>Issues</h2>
+
+<ul>
+  <li>The Rationale should explain why the user would want to use
+    <code>iset</code>s instead of  <code>set</code>s.  It doesn't
+    explain why one would want to use different algorithms to
+    represent sets of integers.  The rationale should explain the
+    reason someone would want to use <code>iset</code>s.</li>
+  <li>Examples are needed.</li>
+  <li><code>iset-replace</code> and <code>iset-replace!</code> don't
+    make sense.  They replace an integer element with itself.</li>
+  <li>There are two examples for <code>iset-map</code>, but the first
+    one doesn't make sense.  It returns an <code>iset</code> of strings,
+    which is not possible.</li></ul>
 
 <h2>Rationale</h2>
 
 <p>While it is perfectly practical to store integers in
- <a href="https://srfi.schemers.org/srfi-113/srfi-113">SRFI 113 isets</a>,
+ <a href="https://srfi.schemers.org/srfi-113/srfi-113">SRFI-113 isets</a>,
 other algorithms can be used to represent isets of integers.
 This SRFI is almost a drop-in replacement for SRFI 113, except that
-except that iset is replaced by <code><code>iset</code></code>
+<code>set</code> is replaced by <code>iset</code>
 in their names. However, comparators are not useful
 for integer isets, and in <code>iset</code>, <code>iset-unfold</code>,
 <code>iset-map</code>, and <code>iset-copy</code> the comparator
@@ -121,7 +146,7 @@ argument is omitted.
 
 <p>Returns the element of <em>iset</em> that is equal, in the sense of <em>iset's</em> equality predicate, to <em>element</em>.  If <em>element</em> is not a member of <em>iset</em>, <em>default</em> is returned.</p>
 
-</p><p><code>(iset-min </code><em>iset</em><code>)</code><br/>
+<p><code>(iset-min </code><em>iset</em><code>)</code><br/>
 <code>(iset-max </code><em>iset</em><code>)</code></p><p>
 
 Returns the smallest or largest integer in <em>iset</em>, or <code>#f</code> if there is none.
@@ -142,7 +167,7 @@ Returns the smallest or largest integer in <em>iset</em>, or <code>#f</code> if 
 
 <p><code>(iset-replace! </code><em>iset element</em><code>)</code></p>
 
-<p>The <code>iset-replace!</code> procedure is the same as<code>iset-replace</code>, except that it is permitted to mutate and return the <em>iset</em> argument rather than allocating a new iset.</p>
+<p>The <code>iset-replace!</code> procedure is the same as <code>iset-replace</code>, except that it is permitted to mutate and return the <em>iset</em> argument rather than allocating a new iset.</p>
 
 <p><code>(iset-delete </code><em>iset element</em> ...<code>)</code></p>
 
@@ -351,9 +376,9 @@ Note that the result <code>iset-range=</code> contains at most one element.
 and places the identifiers of this SRFI into the <code>iset-trie</code> library.</p>
 
 <p>The implementation is based on the Patricia tree approach described by
-Chris Okasaki and Andrew Gill (paper linked in the README), which is
-also used by Haskell's IntMap library.  It provides fast lookup and
-set-theoretical operations: (iset-contains SET N) runs in time linear
+Chris Okasaki and Andrew Gill (paper linked in the <a href="IMPL-README.md">implementation README</a>),
+which is also used by Haskell's IntMap library.  It provides fast lookup and
+set-theoretical operations: <code>(iset-contains SET N)</code> runs in time linear
 to the two's-complement integer length of N, and union, intersection,
 etc. of two sets run in O(n+m) time.  A few benchmarks show that
 they're at least as fast as Chibi's binary tree version in most
@@ -361,7 +386,7 @@ cases.
 
 <h2>Copyright</h2>
 
-<p>Copyright &copy; John Cowan, Wolfgang Corcoran-Mathe 2020.</p> 
+<p>&copy; 2020 John Cowan, Wolfgang Corcoran-Mathe.</p>
 
 <p>Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -370,8 +395,9 @@ the rights to use, copy, modify, merge, publish, distribute, sublicense,
 and/or sell copies of the Software, and to permit persons to whom the
 Software is furnished to do so, subject to the following conditions:</p>
 
-<p>The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.</p>
+<p>The above copyright notice and this permission notice (including the
+next paragraph) shall be included in all copies or substantial
+portions of the Software.</p>
 
 <p>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
