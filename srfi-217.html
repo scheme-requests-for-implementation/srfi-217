@@ -22,10 +22,10 @@
 <h2>Rationale</h2>
 
 <p>While it is perfectly practical to store integers in
- <a href="https://srfi.schemers.org/srfi-113/srfi-113">SRFI 113 isets</a>,
+ <a href="https://srfi.schemers.org/srfi-113/srfi-113">SRFI-113 isets</a>,
 other algorithms can be used to represent isets of integers.
 This SRFI is almost a drop-in replacement for SRFI 113, except that
-except that iset is replaced by <code><code>iset</code></code>
+<code>set</code> is replaced by <code>iset</code>
 in their names. However, comparators are not useful
 for integer isets, and in <code>iset</code>, <code>iset-unfold</code>,
 <code>iset-map</code>, and <code>iset-copy</code> the comparator
@@ -142,7 +142,7 @@ Returns the smallest or largest integer in <em>iset</em>, or <code>#f</code> if 
 
 <p><code>(iset-replace! </code><em>iset element</em><code>)</code></p>
 
-<p>The <code>iset-replace!</code> procedure is the same as<code>iset-replace</code>, except that it is permitted to mutate and return the <em>iset</em> argument rather than allocating a new iset.</p>
+<p>The <code>iset-replace!</code> procedure is the same as <code>iset-replace</code>, except that it is permitted to mutate and return the <em>iset</em> argument rather than allocating a new iset.</p>
 
 <p><code>(iset-delete </code><em>iset element</em> ...<code>)</code></p>
 
@@ -351,9 +351,9 @@ Note that the result <code>iset-range=</code> contains at most one element.
 and places the identifiers of this SRFI into the <code>iset-trie</code> library.</p>
 
 <p>The implementation is based on the Patricia tree approach described by
-Chris Okasaki and Andrew Gill (paper linked in the README), which is
-also used by Haskell's IntMap library.  It provides fast lookup and
-set-theoretical operations: (iset-contains SET N) runs in time linear
+Chris Okasaki and Andrew Gill (paper linked in the <a href="IMPL-README.md">implementation README</a>),
+which is also used by Haskell's IntMap library.  It provides fast lookup and
+set-theoretical operations: <code>(iset-contains SET N)</code> runs in time linear
 to the two's-complement integer length of N, and union, intersection,
 etc. of two sets run in O(n+m) time.  A few benchmarks show that
 they're at least as fast as Chibi's binary tree version in most
