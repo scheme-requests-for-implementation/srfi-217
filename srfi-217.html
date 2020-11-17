@@ -25,42 +25,49 @@
 
 <h2>Abstract</h2>
 
-<p><em>Integer isets</em> are unordered collections of fixnums; that is, exact integers within certain implementation-specified bounds.
+<p>Integer sets, or <em>isets</em>, are unordered collections of fixnums; that is, exact integers within certain implementation-specified bounds.
 
 </p>
 
 <h2>Issues</h2>
 
 <ul>
-  <li>The Rationale should explain why the user would want to use
-    <code>iset</code>s instead of  <code>set</code>s.  It doesn't
-    explain why one would want to use different algorithms to
-    represent sets of integers.  The rationale should explain the
-    reason someone would want to use <code>iset</code>s.</li>
   <li>Examples are needed.</li>
-  <li><code>iset-replace</code> and <code>iset-replace!</code> don't
-    make sense.  They replace an integer element with itself.</li>
-  <li>There are two examples for <code>iset-map</code>, but the first
-    one doesn't make sense.  It returns an <code>iset</code> of strings,
-    which is not possible.</li></ul>
+</ul>
 
 <h2>Rationale</h2>
 
 <p>While it is perfectly practical to store integers in
- <a href="https://srfi.schemers.org/srfi-113/srfi-113">SRFI-113 isets</a>,
-other algorithms can be used to represent isets of integers.
+ <a href="https://srfi.schemers.org/srfi-113/srfi-113">SRFI-113 sets</a>,
+other algorithms can be used to represent sets of exact integers.
 This SRFI is almost a drop-in replacement for SRFI 113, except that
 <code>set</code> is replaced by <code>iset</code>
 in their names. However, comparators are not useful
-for integer isets, and in <code>iset</code>, <code>iset-unfold</code>,
+for integer sets, and in <code>iset</code>, <code>iset-unfold</code>,
 <code>iset-map</code>, and <code>iset-copy</code> the comparator
-argument is omitted.
+argument is omitted.</p>
+
+<p>In addition, since exact integers are inherently ordered, this SRFI
+provides a number of procedures which have no direct equivalents in
+SRFI 113.  These include:
+
+<ul>
+  <li><p><code>make-iset-range</code>, which creates an iset given
+      a range of integers</p></li>
+  <li><p><code>iset-min</code> and <code>iset-max</code>, which
+      return the largest and smallest members</p></li>
+  <li><p>the interval procedures, which return subsets from an
+      existing set that are within a given interval</p></li>
+  <li><p>the range procedures, whuch return subsets from an
+          existing set that are greater than, less than, or equal to
+          a given exact integer</p></li>
+</ul>
 
 <h2>Specification</h2>
 
-<p>Integer isets are disjoint from other types of Scheme objects.</p>
+<p>Isets are disjoint from other types of Scheme objects.</p>
 
-<p>It is an error to add or remove an object for a integer iset while iterating over it.</p>
+<p>It is an error to add or remove an object for an iset while iterating over it.</p>
 
 <h2>Linear update</h2>
 
@@ -81,7 +88,7 @@ argument is omitted.
           (iset-adjoin! iset1 'd)) ; Add d to {a,b,c}.
 </pre>
   
-<p>So clients of these procedures write in a functional style, but must additionally be sure that, when the procedure is called, there are no other live pointers to the potentially-modified iset or bag (hence the term "linear update").</p>
+<p>So clients of these procedures write in a functional style, but must additionally be sure that, when the procedure is called, there are no other live pointers to the potentially-modified iset (hence the term "linear update").</p>
 
 <p>There are two benefits to this convention:</p>
 
@@ -89,7 +96,7 @@ argument is omitted.
 
 <li><p>Programmers may nonetheless continue to assume that isets are purely functional data structures: they may be reliably shared without needing to be copied, uniquified, and so forth.</p></li></ul>
 
-<p>In practice, these procedures are most useful for efficiently constructing isets in a side-effecting manner, in some limited local context, before passing the iset or bag outside the local construction scope to be used in a functional manner.</p>
+<p>In practice, these procedures are most useful for efficiently constructing isets in a side-effecting manner, in some limited local context, before passing the iset outside the local construction scope to be used in a functional manner.</p>
 
 <p>Scheme provides no assistance in checking the linearity of the potentially side-effected parameters passed to these functions — there's no linear type checker or run-time mechanism for detecting violations.</p>
 
@@ -100,7 +107,7 @@ argument is omitted.
 <ul><li><p><a href="#Constructors">Constructors</a>: <code>iset</code>, <code>iset-unfold</code></p>
 </li><li><p><a href="#Predicates">Predicates</a>: <code>iset?</code>, <code>iset-contains?</code>, <code>iset-empty?</code>, <code>iset-disjoint?</code></p>
 </li><li><p><a href="#Accessors">Accessors</a>: <code>iset-member</code>, <code>iset-min</code>, <code>iset-max</code></p>
-</li><li><p><a href="#Updaters">Updaters</a>: <code>iset-adjoin</code>, <code>iset-adjoin!</code>, <code>iset-replace</code>, <code>iset-replace!</code>, <code>iset-delete</code>, <code>iset-delete!</code>, <code>iset-delete-all</code>, <code>iset-delete-all!</code>, <code>iset-search!</code></p>
+</li><li><p><a href="#Updaters">Updaters</a>: <code>iset-adjoin</code>, <code>iset-adjoin!</code>, <code>iset-delete</code>, <code>iset-delete!</code>, <code>iset-delete-all</code>, <code>iset-delete-all!</code>, <code>iset-search!</code></p>
 </li><li><p><a href="#Thewholeiset">The whole iset</a>: <code>iset-size</code>, <code>iset-find</code>, <code>iset-count</code>, <code>iset-any?</code>, <code>iset-every?</code></p>
 </li><li><p><a href="#Mappingandfolding">Mapping and folding</a>: <code>iset-map</code>, <code>iset-for-each</code>, <code>iset-fold</code>, <code>iset-filter</code>, <code>iset-filter!</code>, <code>iset-remove</code>, <code>iset-remove!</code>, <code>iset-partition</code>, <code>iset-partition!</code></p>
 </li><li><p><a href="#Copyingandconversion">Copying and conversion</a>: <code>iset-copy</code>, <code>make-iset-range</code>, <code>iset-&gt;list</code>, <code>list-&gt;iset</code>, <code>list-&gt;iset!</code></p>
@@ -161,14 +168,6 @@ Returns the smallest or largest integer in <em>iset</em>, or <code>#f</code> if 
 
 <p>The <code>iset-adjoin!</code> procedure is the same as <code>iset-adjoin</code>, except that it is permitted to mutate and return the <em>iset</em> argument rather than allocating a new iset.</p>
 
-<p><code>(iset-replace </code><em>iset element</em><code>)</code></p>
-
-<p>The <code>iset-replace</code> procedure returns a newly allocated iset that contains all the values of <em>iset</em> except as follows:  If <i>element</i> is equal to an existing member of <i>iset</i>, then that member is omitted and replaced by <i>element</i>.  If there is no such element in <i>iset</i>, then <i>iset</i> is returned unchanged.</p>
-
-<p><code>(iset-replace! </code><em>iset element</em><code>)</code></p>
-
-<p>The <code>iset-replace!</code> procedure is the same as <code>iset-replace</code>, except that it is permitted to mutate and return the <em>iset</em> argument rather than allocating a new iset.</p>
-
 <p><code>(iset-delete </code><em>iset element</em> ...<code>)</code></p>
 
 <p><code>(iset-delete! </code><em>iset element</em> ...<code>)</code></p>
@@ -226,8 +225,8 @@ Returns <code>#t</code> if every element of <em>iset</em> satisfies <em>predicat
 <p>Applies <em>proc</em> to each element of <em>iset</em> in arbitrary order and returns a newly allocated iset, created as if by <code>iset</code>, which contains the results of the applications.  For example:</p>
 
 <pre>
-        (iset-map number-&gt;string (iset 1 11 21))
-             =&gt; (iset "1" "2" "3")
+        (iset-map (lambda (x) (* 10 x)) (iset 1 11 21))
+             =&gt; (iset 10 110 210)
 </pre>
 
 <pre>
