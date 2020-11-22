@@ -15,6 +15,7 @@
 
   (export iset list->iset
           iset-unfold make-iset-range
+          iset-member
           iset-min iset-max
           iset? iset-contains?
           iset-empty? iset-disjoint?

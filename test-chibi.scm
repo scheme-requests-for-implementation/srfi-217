@@ -87,6 +87,9 @@
   )
 
 (test-group "Accessors"
+  (test 103 (iset-member pos-seq 103 #f))
+  (test 'z (iset-member pos-seq 104 'z))
+
   (test-not (iset-min (iset)))
   (test 1 (iset-min (iset 1 2 3)))
   (test (car pos-seq) (iset-min pos-set))

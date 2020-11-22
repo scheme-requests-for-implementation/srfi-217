@@ -77,6 +77,11 @@
 
 ;;;; Accessors
 
+(define (iset-member set elt default)
+  (if (iset-contains? set elt)
+      elt
+      default))
+
 (define (iset-min set)
   (assume (iset? set))
   (let ((trie (iset-trie set)))
