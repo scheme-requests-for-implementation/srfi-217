@@ -21,8 +21,6 @@
           iset-empty? iset-disjoint?
           iset-adjoin iset-adjoin! iset-delete iset-delete! iset-delete-all
           iset-delete-all!
-          iset-delete-min iset-delete-max
-          iset-delete-min! iset-delete-max!
           iset-size
           iset-any? iset-every?
           iset-count iset-fold
