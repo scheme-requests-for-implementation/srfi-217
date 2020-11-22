@@ -470,17 +470,12 @@ Note that the result <code>iset-range=</code> contains at most one element.
 </p><h2>Implementation</h2>
 
 
-<p>The sample implementation is found in the repository of this SRFI,
-and places the identifiers of this SRFI into the <code>iset-trie</code> library.</p>
+<p>The sample implementation is found in the repository of this SRFI.</p>
 
 <p>The implementation is based on the Patricia tree approach described by
 Chris Okasaki and Andrew Gill (paper linked in the <a href="IMPL-README.md">implementation README</a>),
 which is also used by Haskell's IntMap library.  It provides fast lookup and
-set-theoretical operations: <code>(iset-contains SET N)</code> runs in time linear
-to the two's-complement integer length of N, and union, intersection,
-etc. of two sets run in O(n+m) time.  A few benchmarks show that
-they're at least as fast as Chibi's binary tree version in most
-cases.
+set-theoretical operations.</p>
 
 <h2>Copyright</h2>
 
