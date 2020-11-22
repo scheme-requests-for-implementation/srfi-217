@@ -424,6 +424,11 @@ Returns <code>#t</code> if each <em>iset</em> other than the last is a subset of
 Returns <code>#t</code> if each <em>iset</em> other than the last is a superset of the following <em>iset</em>, and <code>#f</code> otherwise.
 
 </p>
+<p>Examples:</p>
+<pre class="example"><code>(iset=? (iset 1 2 3) (iset 3 1 2)) ⇒ #t
+(iset&lt;? (iset 3 1 2) (iset 4 2 1 3)) ⇒ #t
+(iset&gt;=? (iset 3 0 1) (iset 0 1) (iset 0 1)) ⇒ #t
+</code></pre>
 
 <h2 id="Settheoryoperations">Set theory operations</h2><p><code>(iset-union </code><em>iset<sub>1</sub> iset<sub>2</sub></em> ...<code>)</code>
 
@@ -434,6 +439,12 @@ Returns <code>#t</code> if each <em>iset</em> other than the last is a superset 
 </p><p><code>(iset-xor </code><em>iset<sub>1</sub> iset<sub>2</sub></em><code>)</code></p><p>
 
 Return a newly allocated iset that is the union, intersection, asymmetric difference, or symmetric difference of the <em>isets</em>.  Asymmetric difference is extended to more than two isets by taking the difference between the first iset and the union of the others.  Symmetric difference is not extended beyond two isets.  Elements in the result iset are drawn from the first iset in which they appear.
+
+<pre class="example"><code>(iset-&gt;list (iset-union (iset 0 1 3) (iset 0 2 4))) ⇒ (0 1 2 3 4)
+(iset-&gt;list (iset-intersection (iset 0 1 3 4) (iset 0 2 4))) ⇒ (0 4)
+(iset-&gt;list (iset-difference (iset 0 1 3 4) (iset 0 2) (iset 0 4))) ⇒ (1 3)
+(iset-&gt;list (iset-xor (iset 0 1 3) (iset 0 2 4))) ⇒ (1 2 3 4)
+</code></pre>
 
 </p><p><code>(iset-union! </code><em>iset<sub>1</sub> iset<sub>2</sub></em> ...<code>)</code>
 
@@ -456,6 +467,12 @@ Procedures that return a subset of <em>iset</em> contained in the interval from 
 to <em>high</em>.  The interval may be open, closed, open below and closed above, or open above and
 closed below.
 
+<pre class="example"><code>(iset-&gt;list (iset-open-interval (iset 2 3 5 7 11) 2 7)) ⇒ (3 5)
+(iset-&gt;list (iset-closed-interval (iset 2 3 5 7 11) 2 7)) ⇒ (2 3 5 7)
+(iset-&gt;list (iset-open-closed-interval (iset 2 3 5 7 11) 2 7)) ⇒ (3 5 7)
+(iset-&gt;list (iset-closed-open-interval (iset 2 3 5 7 11) 2 7)) ⇒ (2 3 5)
+</code></pre>
+
 </p><p><code>(iset-range= </code><em>iset k</em><code>)</code>
 </p><p><code>(iset-range&lt; </code><em>iset k</em><code>)</code>
 </p><p><code>(iset-range&lt;= </code><em>iset k</em><code>)</code>
@@ -466,6 +483,11 @@ closed below.
 Procedures that return an integer set containing the elements of <em>iset</em> that are equal
 to, less than, less than or equal to, greater than, or greater than or equal to <em>k</em>.
 Note that the result <code>iset-range=</code> contains at most one element.
+
+<pre class="example"><code>(iset-&gt;list (iset-range= (iset 2 3 5 7 11) 7)) ⇒ (7)
+(iset-&gt;list (iset-range&lt; (iset 2 3 5 7 11) 7)) ⇒ (2 3 5)
+(iset-&gt;list (iset-range&gt;= (iset 2 3 5 7 11) 7)) ⇒ (7 11)
+</code></pre>
 
 </p><h2>Implementation</h2>
 
