@@ -1,4 +1,4 @@
-(define-library (iset-trie)
+(define-library (srfi 217)
   (import (scheme base)
           (only (srfi 1) fold)
           (srfi 143))
