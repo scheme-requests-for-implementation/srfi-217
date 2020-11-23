@@ -1,5 +1,5 @@
 (import (scheme base)
-        (iset-trie)
+        (srfi 217)
         (chibi test)
         (only (srfi 1) iota any every last take-while drop-while count
                        fold filter remove last partition)
