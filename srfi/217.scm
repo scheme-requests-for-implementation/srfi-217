@@ -77,6 +77,11 @@
 
 ;;;; Accessors
 
+(define (iset-member set elt default)
+  (if (iset-contains? set elt)
+      elt
+      default))
+
 (define (iset-min set)
   (assume (iset? set))
   (let ((trie (iset-trie set)))
@@ -124,53 +129,6 @@
 
 (define (iset-delete-all! set ns)
   (iset-delete-all set ns))
-
-;; The search/rebuild process is complicated by the need to handle
-;; a negative branching-bit (which can only occur at the root of the
-;; trie) differently.
-(define (iset-delete-min set)
-  (assume (iset? set))
-  (letrec
-   ((update
-     (lambda (t)
-       (cond ((not t) (values #f #f))
-             ((integer? t) (values t #f))
-             (else (update-branch t)))))
-    (update-branch
-     (lambda (t)
-       (let*-branch (((p m l r) t))
-         (if (negative? m)
-             (let-values (((n r*) (update r)))   ; root node only
-               (values n (smart-branch p m l r*)))
-             (let-values (((n l*) (update l)))
-               (values n (smart-branch p m l* r))))))))
-    (let*-values (((trie) (iset-trie set))
-                  ((least trie*) (update trie)))
-      (values least (raw-iset trie*)))))
-
-(define (iset-delete-max set)
-  (assume (iset? set))
-  (letrec
-   ((update
-     (lambda (t)
-       (cond ((not t) (values #f #f))
-             ((integer? t) (values t #f))
-             (else (update-branch t)))))
-    (update-branch
-     (lambda (t)
-       (let*-branch (((p m l r) t))
-         (if (negative? m)
-             (let-values (((n l*) (update l)))   ; root node only
-               (values n (smart-branch p m l* r)))
-             (let-values (((n r*) (update r)))
-               (values n (smart-branch p m l r*))))))))
-    (let*-values (((trie) (iset-trie set))
-                  ((least trie*) (update trie)))
-      (values least (raw-iset trie*)))))
-
-
-(define (iset-delete-min! set) (iset-delete-min set))
-(define (iset-delete-max! set) (iset-delete-max set))
 
 ;;;; The whole iset
 
