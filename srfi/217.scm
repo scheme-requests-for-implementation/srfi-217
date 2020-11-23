@@ -235,11 +235,15 @@
 
 ;;;; Comparison
 
-(define (iset=? set1 set2)
+(define (iset=? set1 set2 . sets)
   (assume (iset? set1))
-  (assume (iset? set2))
-  (or (eqv? set1 set2)         ; quick check
-      (trie=? (iset-trie set1) (iset-trie set2))))
+  (let ((iset-eq1 (lambda (set)
+                    (assume (iset? set))
+                    (or (eqv? set1 set)
+                        (trie=? (iset-trie set1) (iset-trie set))))))
+    (and (iset-eq1 set2)
+         (or (null? sets)
+             (every iset-eq1 sets)))))
 
 (define (iset<? set1 set2)
   (assume (iset? set1))

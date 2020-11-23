@@ -1,6 +1,6 @@
 (define-library (srfi 217)
   (import (scheme base)
-          (only (srfi 1) fold)
+          (only (srfi 1) fold every)
           (srfi 143))
 
   (cond-expand
