@@ -26,6 +26,7 @@
           iset-count iset-fold
           iset-map iset-for-each
           iset-filter iset-remove
+          iset-partition iset-partition!
           iset-copy
           iset->list
           iset=?

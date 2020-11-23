@@ -2,7 +2,7 @@
         (iset-trie)
         (chibi test)
         (only (srfi 1) iota any every last take-while drop-while count
-                       fold filter remove last)
+                       fold filter remove last partition)
         )
 
 ;;; Utility
@@ -176,7 +176,7 @@
           (iset-for-each (lambda (n) (set! sum (+ sum n))) sparse-set)
           sum))
 
-  ;;; filter & remove
+  ;;; filter, remove, & partition
 
   (test-assert (iset-empty? (iset-filter (constantly #f) pos-set)))
   (test-equal iset=?
@@ -192,6 +192,17 @@
   (test-equal iset=?
               (list->iset (remove even? mixed-seq))
               (iset-remove even? mixed-set))
+  (test-assert
+   (let-values (((in out) (iset-partition (constantly #f) pos-set)))
+     (and (iset-empty? in) (iset=? pos-set out))))
+  (test-assert
+   (let-values (((in out) (iset-partition (constantly #t) pos-set)))
+     (and (iset=? pos-set in) (iset-empty? out))))
+  (test-assert
+   (let-values (((in out) (iset-partition even? mixed-set))
+                ((lin lout) (partition even? mixed-seq)))
+     (and (iset=? in (list->iset lin))
+          (iset=? out (list->iset lout)))))
   )
 
 (test-group "Comparison"

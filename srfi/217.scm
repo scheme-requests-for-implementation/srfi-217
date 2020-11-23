@@ -215,6 +215,15 @@
   (assume (iset? set))
   (raw-iset (trie-filter (lambda (n) (not (pred n))) (iset-trie set))))
 
+(define (iset-partition pred set)
+  (assume (procedure? pred))
+  (assume (iset? set))
+  (let-values (((tin tout) (trie-partition pred (iset-trie set))))
+    (values (raw-iset tin) (raw-iset tout))))
+
+(define (iset-partition! pred set)
+  (iset-partition pred set))
+
 ;;;; Copying and conversion
 
 (define (iset-copy set)

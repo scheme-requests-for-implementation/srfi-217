@@ -141,6 +141,24 @@
                    (copy-trie (branch-left trie))
                    (copy-trie (branch-right trie))))))
 
+(define (trie-partition pred trie)
+  (letrec
+   ((part
+     (lambda (t)
+       (cond ((not t) (values #f #f))
+             ((integer? t)
+              (if (pred t)
+                  (values t #f)
+                  (values #f t)))
+             (else
+              (let-values (((p) (branch-prefix t))
+                           ((m) (branch-branching-bit t))
+                           ((il ol) (part (branch-left t)))
+                           ((ir or) (part (branch-right t))))
+                (values (smart-branch p m il ir)
+                        (smart-branch p m ol or))))))))
+    (part trie)))
+
 (define (trie-filter pred trie)
   (and trie
        (if (integer? trie)
