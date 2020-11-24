@@ -234,6 +234,9 @@
   (test-equal iset=?
               (list->iset (iota 30 100 3))
               (iset-union pos-set (list->iset (iota 20 130 3))))
+  (test-equal iset=?
+              (list->iset (iota 10))
+              (iset-union (iset 0 1 2) (iset 3 5 8) (iset 4 6 7 9)))
 
   ;; iset-intersection
   (test-assert (iset-empty? (iset-intersection (iset) mixed-set)))
@@ -243,6 +246,9 @@
   (test-equal iset=?
               (list->iset (drop-while negative? mixed-seq))
               (iset-intersection mixed-set dense-set))
+  (test-equal iset=?
+              (iset 0 1)
+              (iset-intersection (iset 0 1 2) (iset 0 1 3 4) (iset 10 7 0 1)))
 
   ;; iset-difference
   (test-assert (iset-empty? (iset-difference neg-set neg-set)))
@@ -254,6 +260,9 @@
   (test-equal iset=?
               (list->iset (take-while negative? mixed-seq))
               (iset-difference mixed-set dense-set))
+  (test-equal iset=?
+              (iset 0 1)
+              (iset-intersection (iset 0 1 2 5) (iset 0 1 3 4) (iset 10 7 0 1)))
 
   ;; iset-xor
   (test-equal iset=? mixed-set (iset-xor (iset) mixed-set))

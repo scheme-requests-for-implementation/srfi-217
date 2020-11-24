@@ -271,26 +271,54 @@
 
 ;;;; Set theory operations
 
-(define (iset-union set1 set2)
-  (assume (iset? set1))
-  (assume (iset? set2))
-  (raw-iset (trie-merge trie-insert (iset-trie set1) (iset-trie set2))))
+(define (iset-union set . rest)
+  (assume (iset? set))
+  (if (null? rest)
+      (iset-copy set)
+      (raw-iset (fold (lambda (s t)
+                        (assume (iset? s))
+                        (trie-merge trie-insert (iset-trie s) t))
+                      (iset-trie set)
+                      rest))))
 
-(define (iset-union! set1 set2) (iset-union set1 set2))
+(define (iset-union! set . rest)
+  (apply iset-union set rest))
 
-(define (iset-intersection set1 set2)
-  (assume (iset? set1))
-  (assume (iset? set2))
-  (raw-iset (trie-intersection (iset-trie set1) (iset-trie set2))))
+(define iset-intersection
+  (case-lambda
+    ((set) (iset-copy set))
+    ((set1 set2)
+     (raw-iset (trie-intersection (iset-trie set1) (iset-trie set2))))
+    ((set . rest)
+     (assume (iset? set))
+     ;; If successive intersections result in an empty set,
+     ;; return it immediately.
+     (call-with-current-continuation
+      (lambda (return)
+        (raw-iset (fold (lambda (s t)
+                          (assume (iset? s))
+                          (if t
+                              (trie-intersection (iset-trie s) t)
+                              (return (iset))))
+                  (iset-trie set)
+                  rest)))))))
 
-(define (iset-intersection! set1 set2) (iset-intersection set1 set2))
+(define (iset-intersection! set . rest)
+  (apply iset-intersection set rest))
 
-(define (iset-difference set1 set2)
-  (assume (iset? set1))
-  (assume (iset? set2))
-  (raw-iset (trie-difference (iset-trie set1) (iset-trie set2))))
+(define iset-difference
+  (case-lambda
+    ((set) (iset-copy set))
+    ((set1 set2)              ; fast path
+     (raw-iset (trie-difference (iset-trie set1) (iset-trie set2))))
+    ((set . rest)
+     (assume (iset? set))
+     (raw-iset
+      (trie-difference (iset-trie set)
+                       (iset-trie (apply iset-union rest)))))))
 
-(define (iset-difference! set1 set2) (iset-difference set1 set2))
+(define (iset-difference! set . rest)
+  (apply iset-difference set rest))
 
 (define (iset-xor set1 set2)
   (assume (iset? set1))
