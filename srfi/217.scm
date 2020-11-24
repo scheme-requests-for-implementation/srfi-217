@@ -33,6 +33,7 @@
   (or (pair? x) (null? x)))
 
 (define (list->iset ns)
+  (assume (pair-or-null? ns))
   (raw-iset
    (fold (lambda (n t)
            (assume (valid-integer? n))
