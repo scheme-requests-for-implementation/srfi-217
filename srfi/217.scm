@@ -29,6 +29,9 @@
 (define (iset . args)
   (list->iset args))
 
+(define (pair-or-null? x)
+  (or (pair? x) (null? x)))
+
 (define (list->iset ns)
   (raw-iset
    (fold (lambda (n t)
@@ -36,6 +39,15 @@
            (trie-insert t n))
          #f
          ns)))
+
+(define (list->iset! set ns)
+  (assume (iset? set))
+  (assume (pair-or-null? ns))
+  (raw-iset (fold (lambda (n t)
+                    (assume (valid-integer? n))
+                    (trie-insert t n))
+                  (iset-trie set)
+                  ns)))
 
 (define (iset-unfold stop? mapper successor seed)
   (assume (procedure? stop?))

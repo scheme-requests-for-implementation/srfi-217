@@ -55,6 +55,11 @@
   (test-assert (= (length (iset->list pos-set)) (iset-size pos-set)))
   (test-assert (every (lambda (n) (iset-contains? pos-set n))
                       (iset->list pos-set)))
+
+  (test-equal iset=? (iset 1) (list->iset! (iset) '(1)))
+  (test-equal iset=?
+              (iset-adjoin pos-set 2 4 6)
+              (list->iset! (iset-copy pos-set) '(2 4 6)))
   )
 
 (test-group "Constructors"
