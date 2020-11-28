@@ -292,29 +292,57 @@
          (or (null? sets)
              (every iset-eq1 sets)))))
 
-(define (iset<? set1 set2)
-  (assume (iset? set1))
-  (assume (iset? set2))
-  (trie-proper-subset? (iset-trie set1) (iset-trie set2)))
+(define iset<?
+  (case-lambda
+    ((set)
+     (assume (iset? set))
+     #t)
+    ((set1 set2 . sets)
+     (assume (iset? set1))
+     (assume (iset? set2))
+     (let lp ((t1 (iset-trie set1)) (t2 (iset-trie set2)) (sets sets))
+       (and (trie-proper-subset? t1 t2)
+            (or (null? sets)
+		(lp t2 (iset-trie (car sets)) (cdr sets))))))))
 
-(define (iset>? set1 set2)
-  (assume (iset? set1))
-  (assume (iset? set2))
-  (trie-proper-subset? (iset-trie set2) (iset-trie set1)))
+(define iset>?
+  (case-lambda
+    ((set)
+     (assume (iset? set))
+     #t)
+    ((set1 set2 . sets)
+     (assume (iset? set1))
+     (assume (iset? set2))
+     (let lp ((t1 (iset-trie set1)) (t2 (iset-trie set2)) (sets sets))
+       (and (trie-proper-subset? t2 t1)
+            (or (null? sets)
+	        (lp t2 (iset-trie (car sets)) (cdr sets))))))))
 
-(define (iset<=? set1 set2)
-  (assume (iset? set1))
-  (assume (iset? set2))
-  (and (memv (trie-subset-compare (iset-trie set1) (iset-trie set2))
-             '(less equal))
-       #t))
+(define iset<=?
+  (case-lambda
+    ((set)
+     (assume (iset? set))
+     #t)
+    ((set1 set2 . sets)
+     (assume (iset? set1))
+     (assume (iset? set2))
+     (let lp ((t1 (iset-trie set1)) (t2 (iset-trie set2)) (sets sets))
+       (and (memv (trie-subset-compare t1 t2) '(less equal))
+            (or (null? sets)
+		(lp t2 (iset-trie (car sets)) (cdr sets))))))))
 
-(define (iset>=? set1 set2)
-  (assume (iset? set1))
-  (assume (iset? set2))
-  (and (memv (trie-subset-compare (iset-trie set1) (iset-trie set2))
-             '(greater equal))
-       #t))
+(define iset>=?
+  (case-lambda
+    ((set)
+     (assume (iset? set))
+     #t)
+    ((set1 set2 . sets)
+     (assume (iset? set1))
+     (assume (iset? set2))
+     (let lp ((t1 (iset-trie set1)) (t2 (iset-trie set2)) (sets sets))
+       (and (memv (trie-subset-compare t1 t2) '(greater equal))
+	    (or (null? sets)
+		(lp t2 (iset-trie (car sets)) (cdr sets))))))))
 
 ;;;; Set theory operations
 
