@@ -117,13 +117,19 @@
 
 ;;;; Updaters
 
-;; FIXME: Not in the pre-SRFI, but should be added.
-(define (iset-adjoin set n)
+(define (iset-adjoin set . ns)
   (assume (iset? set))
-  (assume (valid-integer? n))
-  (raw-iset (trie-insert (iset-trie set) n)))
+  (if (null? ns)
+      (iset-copy set)
+      (raw-iset
+       (fold (lambda (n t)
+               (assume (valid-integer? n))
+               (trie-insert t n))
+             (iset-trie set)
+             ns))))
 
-(define (iset-adjoin! set n) (iset-adjoin set n))
+(define (iset-adjoin! set . ns)
+  (apply iset-adjoin set ns))
 
 (define (iset-delete set n)
   (assume (iset? set))
