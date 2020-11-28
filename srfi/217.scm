@@ -149,6 +149,31 @@
 (define (iset-delete-all! set ns)
   (iset-delete-all set ns))
 
+;; Thanks to the authors of SRFI 146 for providing examples
+;; of how to implement this shoggoth.
+;;
+;; There's a problem with the update continuation passed to the
+;; success procedure.  The spec allows it to be called with an
+;; arbitrary new element to insert in place of the existing
+;; element; this can be used to subvert the organization of the
+;; underlying trie.
+(define (iset-search set elt failure success)
+  (assume (iset? set))
+  (assume (valid-integer? elt))
+  (assume (procedure? failure))
+  (assume (procedure? success))
+  (call-with-current-continuation
+   (lambda (return)
+     (let-values (((trie obj)
+                   (trie-search (iset-trie set)
+                                elt
+                                (lambda (insert ignore)
+                                  (failure insert
+                                           (lambda (obj)
+                                             (return set obj))))
+                                success)))
+       (values (raw-iset trie) obj)))))
+
 ;;;; The whole iset
 
 (define (iset-size set)

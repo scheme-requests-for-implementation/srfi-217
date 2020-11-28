@@ -131,6 +131,15 @@
   (test-equal iset=?
               (iset 100 103 106)
               (iset-delete-all pos-set (iota 17 109 3)))
+
+  ;; No change.  This uses iset-search as iset-contains?.
+  (test-assert
+   (let-values
+    (((_ found) (iset-search pos-set
+                             133
+                             (lambda (_ ignore) (ignore #f))
+                             (lambda (update _) (update 133 #t)))))
+     found))
   )
 
 (test-group "Whole set operations"
