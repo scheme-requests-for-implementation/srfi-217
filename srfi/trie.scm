@@ -478,9 +478,7 @@
                          (values #f obj))))
              ((integer? t)
               (if (fx=? t key)
-                  (success key
-                           values
-                           (lambda (obj) (values #f obj)))
+                  (success (lambda (obj) (values #f obj)))
                   (failure (lambda (obj)                   ; insert
                              (values (trie-join key 0 key t 0 t) obj))
                            (lambda (obj)                   ; ignore

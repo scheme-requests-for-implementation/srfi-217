@@ -152,11 +152,9 @@
 ;; Thanks to the authors of SRFI 146 for providing examples
 ;; of how to implement this shoggoth.
 ;;
-;; There's a problem with the update continuation passed to the
-;; success procedure.  The spec allows it to be called with an
-;; arbitrary new element to insert in place of the existing
-;; element; this can be used to subvert the organization of the
-;; underlying trie.
+;; The success continuation is complicated by the fact that arbitrary
+;; new elements cannot be inserted into a trie "in place".  We thus
+;; need to remove the old element before inserting the new.
 (define (iset-search set elt failure success)
   (assume (iset? set))
   (assume (valid-integer? elt))
@@ -164,14 +162,19 @@
   (assume (procedure? success))
   (call-with-current-continuation
    (lambda (return)
-     (let-values (((trie obj)
-                   (trie-search (iset-trie set)
-                                elt
-                                (lambda (insert ignore)
-                                  (failure insert
-                                           (lambda (obj)
-                                             (return set obj))))
-                                success)))
+     (let-values
+      (((trie obj)
+        (trie-search (iset-trie set)
+                     elt
+                     (lambda (insert ignore)
+                       (failure insert
+                                (lambda (obj) (return set obj))))
+                     (lambda (remove)
+                       (success elt
+                                (lambda (new obj)
+                                  (let-values (((trie* obj*) (remove obj)))
+                                    (values (trie-insert trie* new) obj*)))
+                                remove)))))
        (values (raw-iset trie) obj)))))
 
 ;;;; The whole iset

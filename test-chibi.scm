@@ -132,14 +132,45 @@
               (iset 100 103 106)
               (iset-delete-all pos-set (iota 17 109 3)))
 
-  ;; No change.  This uses iset-search as iset-contains?.
+  ;; iset-search insertion
   (test-assert
-   (let-values
-    (((_ found) (iset-search pos-set
-                             133
-                             (lambda (_ ignore) (ignore #f))
-                             (lambda (update _) (update 133 #t)))))
-     found))
+   (call-with-values
+    (lambda ()
+      (iset-search (iset 2 3 4)
+                   1
+                   (lambda (insert _) (insert #t))
+                   (lambda (x update _) (update 1 #t))))
+    (lambda (set _) (iset=? (iset 1 2 3 4) set))))
+
+  ;; iset-search ignore
+  (test-assert
+   (call-with-values
+    (lambda ()
+      (iset-search (iset 2 3 4)
+                   1
+                   (lambda (_ ignore) (ignore #t))
+                   (lambda (x _ remove) (remove #t))))
+    (lambda (set _) (iset=? (iset 2 3 4) set))))
+
+  ;; iset-search update
+  (test-assert
+   (call-with-values
+    (lambda ()
+      (iset-search (iset 2 3 4)
+                   3
+                   (lambda (insert _) (insert #t))
+                   (lambda (x update _) (update 5 #t))))
+    (lambda (set _) (iset=? (iset 2 4 5) set))))
+
+  ;; iset-search remove
+  (test-assert
+   (call-with-values
+    (lambda ()
+      (iset-search (iset 2 3 4)
+                   3
+                   (lambda (_ ignore) (ignore #t))
+                   (lambda (x _ remove) (remove #t))))
+    (lambda (set _) (iset=? (iset 2 4) set))))
   )
 
 (test-group "Whole set operations"
