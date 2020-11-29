@@ -488,9 +488,9 @@
                 (if (match-prefix? key p m)
                     (if (zero-bit? key m)
                         (let-values (((l* obj) (search l)))
-                          (values (branch p m l* r) obj))
+                          (values (smart-branch p m l* r) obj))
                         (let-values (((r* obj) (search r)))
-                          (values (branch p m l r*) obj)))
+                          (values (smart-branch p m l r*) obj)))
                     (failure (lambda (obj)                 ; insert
                                (values (trie-join key 0 key p m t) obj))
                              (lambda (obj)                 ; ignore
