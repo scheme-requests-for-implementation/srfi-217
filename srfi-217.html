@@ -26,9 +26,9 @@
 
 <h2>Abstract</h2>
 
-<p>Integer sets, or <em>isets</em>, are unordered collections of fixnums; that is, exact integers within certain implementation-specified bounds.
-
-</p>
+<p>Integer sets, or <em>isets</em>, are unordered collections of
+fixnums.  (Fixnums are exact integers within certain
+implementation-specified bounds.)</p>
 
 <h2>Issues</h2>
 
@@ -43,7 +43,7 @@
 other algorithms can be used to represent sets of exact integers.
 This SRFI is almost a drop-in replacement for SRFI 113, except that
 <code>set</code> is replaced by <code>iset</code>
-in their names. However, comparators are not useful
+in procedure names. However, comparators are not useful
 for integer sets, and in <code>iset</code>, <code>iset-unfold</code>,
 <code>iset-map</code>, and <code>iset-copy</code> the comparator
 argument is omitted.</p>
