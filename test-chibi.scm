@@ -204,7 +204,7 @@
 
   ;;; iset-map
 
-  (test-assert iset-empty? (iset-map values (iset)))
+  (test-assert (iset-empty? (iset-map values (iset))))
   (test-equal iset=? pos-set (iset-map values pos-set))
   (test-equal iset=?
               (list->iset (map (lambda (n) (* n 2)) mixed-seq))
