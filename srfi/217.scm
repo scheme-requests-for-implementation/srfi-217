@@ -172,6 +172,9 @@
                                 success)))
        (values (raw-iset trie) obj)))))
 
+(define (iset-search! set elt failure success)
+  (iset-search set elt failure success))
+
 ;;;; The whole iset
 
 (define (iset-size set)
