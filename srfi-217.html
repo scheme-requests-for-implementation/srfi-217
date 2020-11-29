@@ -45,7 +45,7 @@ This SRFI is almost a drop-in replacement for SRFI 113, except that
 <code>set</code> is replaced by <code>iset</code>
 in procedure names. However, comparators are not useful
 for integer sets, and in <code>iset</code>, <code>iset-unfold</code>,
-<code>iset-map</code>, and <code>iset-copy</code> the comparator
+<code>iset-map</code>, and <code>iset-copy</code>, the comparator
 argument is omitted.</p>
 
 <p>In addition, since exact integers are inherently ordered, this SRFI
@@ -292,12 +292,12 @@ Returns <code>#t</code> if every element of <em>iset</em> satisfies <em>predicat
 
 <p>Applies <em>proc</em> to each element of <em>iset</em> in arbitrary order and returns a newly allocated iset, created as if by <code>iset</code>, which contains the results of the applications.  For example:</p>
 
-<pre>
-        (iset-map (lambda (x) (* 10 x)) (iset 1 11 21))
-             =&gt; (iset 10 110 210)
+<pre class="example">
+(iset-map (lambda (x) (* 10 x)) (iset 1 11 21))
+     =&gt; (iset 10 110 210)
 </pre>
 
-<pre>
+<pre class="example">
 (iset-map (lambda (x) (quotient x 2))
          (iset 1 2 3 4 5))
  => (iset 0 1 2)
