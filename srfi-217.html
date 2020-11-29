@@ -252,7 +252,7 @@ Returns the number of elements in <em>iset</em> as an exact integer.
 <pre class="example"><code>(iset-size (iset 1 3 5)) ⇒ 3
 </code></pre>
 
-</p><p><code>(iset-find </code><em>predicate iset failure</em><code>)</code></p><p>
+<p><code>(iset-find </code><em>predicate iset failure</em><code>)</code></p><p>
 
 Returns an arbitrarily chosen element of <em>iset</em> that satisfies <em>predicate</em>, or the result of invoking <em>failure</em> with no arguments if there is none.
 </p>
@@ -268,7 +268,7 @@ Returns the number of elements of <em>iset</em> that satisfy <em>predicate</em> 
 <pre class="example"><code>(iset-count positive? (iset -2 -1 1 2)) ⇒ 2
 </code></pre>
 
-</p><p><code>(iset-any? </code><em>predicate iset</em><code>)</code></p><p>
+<p><code>(iset-any? </code><em>predicate iset</em><code>)</code></p><p>
 
 Returns <code>#t</code> if any element of <em>iset</em> satisfies <em>predicate</em>, or <code>#f</code> otherwise.  Note that this differs from the SRFI 1 analogue because it does not return an element of the iset.
 
@@ -276,7 +276,7 @@ Returns <code>#t</code> if any element of <em>iset</em> satisfies <em>predicate<
 (iset-any? zero? (iset -2 -1 1 2)) ⇒ #f
 </code></pre>
 
-</p><p><code>(iset-every? </code><em>predicate iset</em><code>)</code></p><p>
+<p><code>(iset-every? </code><em>predicate iset</em><code>)</code></p><p>
 
 Returns <code>#t</code> if every element of <em>iset</em> satisfies <em>predicate</em>, or <code>#f</code> otherwise.  Note that this differs from the SRFI 1 analogue because it does not return an element of the iset.  
 
@@ -373,14 +373,14 @@ Returns a newly allocated list containing the members of <em>iset</em> in unspec
 <pre class="example"><code>(iset-&gt;list (iset 2 3 5 7 11)) ⇒ (2 3 5 7 11)
 </code></pre>
 
-</p><p><code>(list-&gt;iset </code><em>list</em><code>)</code></p><p>
+<p><code>(list-&gt;iset </code><em>list</em><code>)</code></p><p>
 
 Returns a newly allocated iset, created as if by <code>iset</code>, that contains the elements of <em>list</em>.  Duplicate elements are omitted.
 
 <pre class="example"><code>(list-&gt;iset '(-3 -1 0 2)) = (iset -3 -1 0 2)
 </code></pre>
 
-</p><p><code>(list-&gt;iset! </code><em>iset list</em><code>)</code></p><p>
+<p><code>(list-&gt;iset! </code><em>iset list</em><code>)</code></p><p>
 
 Returns a iset that contains the elements of both <em>iset</em> and <em>list</em>.  Duplicate elements are omitted.
 
@@ -390,7 +390,7 @@ Returns a iset that contains the elements of both <em>iset</em> and <em>list</em
  ⇒ (-3 -1 0 2 3 5)
 </code></pre>
 
-</p><h2 id="Subsets">Subsets</h2>
+<h2 id="Subsets">Subsets</h2>
 
 <p>
   Note: None of these predicates produces a total order on
@@ -452,7 +452,7 @@ Return a newly allocated iset that is the union, intersection, asymmetric differ
 (iset-&gt;list (iset-xor (iset 0 1 3) (iset 0 2 4))) ⇒ (1 2 3 4)
 </code></pre>
 
-</p><p><code>(iset-union! </code><em>iset<sub>1</sub> iset<sub>2</sub></em> ...<code>)</code>
+<p><code>(iset-union! </code><em>iset<sub>1</sub> iset<sub>2</sub></em> ...<code>)</code>
 
 </p><p><code>(iset-intersection! </code><em>iset<sub>1</sub> iset<sub>2</sub></em> ...<code>)</code>
 
@@ -479,7 +479,7 @@ closed below.
 (iset-&gt;list (iset-closed-open-interval (iset 2 3 5 7 11) 2 7)) ⇒ (2 3 5)
 </code></pre>
 
-</p><p><code>(iset-range= </code><em>iset k</em><code>)</code>
+<p><code>(iset-range= </code><em>iset k</em><code>)</code>
 </p><p><code>(iset-range&lt; </code><em>iset k</em><code>)</code>
 </p><p><code>(iset-range&lt;= </code><em>iset k</em><code>)</code>
 </p><p><code>(iset-range> </code><em>iset k</em><code>)</code>
@@ -495,7 +495,7 @@ Note that the result <code>iset-range=</code> contains at most one element.
 (iset-&gt;list (iset-range&gt;= (iset 2 3 5 7 11) 7)) ⇒ (7 11)
 </code></pre>
 
-</p><h2>Implementation</h2>
+<h2>Implementation</h2>
 
 
 <p>The sample implementation is found in the repository of this SRFI.</p>
