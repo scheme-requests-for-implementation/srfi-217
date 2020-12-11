@@ -151,10 +151,6 @@
 
 ;; Thanks to the authors of SRFI 146 for providing examples
 ;; of how to implement this shoggoth.
-;;
-;; The `update' continuation has a bug: as it allows arbitrary
-;; elements to be inserted "in place", it can be used to create
-;; an invalid trie.
 (define (iset-search set elt failure success)
   (assume (iset? set))
   (assume (valid-integer? elt))

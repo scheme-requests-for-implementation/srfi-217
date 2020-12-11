@@ -467,34 +467,44 @@
 	                        (subtrie< (branch-left trie) b high-inclusive))))
 	(interval trie))))
 
+;; Search trie for key, and construct a new trie using the results of
+;; failure and success.
+;;
+;; Note that the first continuation passed to success aborts the
+;; construction of the new trie and simply inserts the new element
+;; into the old one.  This is necessitated by the fact that the new
+;; element may be anything, and thus can't be inserted "in place".
 (define (trie-search trie key failure success)
-  (letrec
-   ((search
-     (lambda (t)
-       (cond ((not t)
-              (failure (lambda (obj)          ; insert
-                         (values key obj))
-                       (lambda (obj)          ; ignore
-                         (values #f obj))))
-             ((integer? t)
-              (if (fx=? t key)
-                  (success key
-                           values
-                           (lambda (obj) (values #f obj)))
-                  (failure (lambda (obj)                   ; insert
-                             (values (trie-join key 0 key t 0 t) obj))
-                           (lambda (obj)                   ; ignore
-                             (values #f obj)))))
-             (else
-              (let*-branch (((p m l r) t))
-                (if (match-prefix? key p m)
-                    (if (zero-bit? key m)
-                        (let-values (((l* obj) (search l)))
-                          (values (smart-branch p m l* r) obj))
-                        (let-values (((r* obj) (search r)))
-                          (values (smart-branch p m l r*) obj)))
-                    (failure (lambda (obj)                 ; insert
-                               (values (trie-join key 0 key p m t) obj))
-                             (lambda (obj)                 ; ignore
-                               (values t obj))))))))))
-    (search trie)))
+  (call-with-current-continuation
+   (lambda (abort)
+     (letrec
+      ((search
+        (lambda (t)
+          (cond ((not t)
+                 (failure (lambda (obj)          ; insert
+                            (values key obj))
+                          (lambda (obj)          ; ignore
+                            (values #f obj))))
+                ((integer? t)
+                 (if (fx=? t key)
+                     (success key
+                              (lambda (elt obj)  ; discard the new trie
+                                (abort (trie-insert trie elt) obj))
+                              (lambda (obj) (values #f obj)))
+                     (failure (lambda (obj)                   ; insert
+                                (values (trie-join key 0 key t 0 t) obj))
+                              (lambda (obj)                   ; ignore
+                                (values #f obj)))))
+                (else
+                 (let*-branch (((p m l r) t))
+                   (if (match-prefix? key p m)
+                       (if (zero-bit? key m)
+                           (let-values (((l* obj) (search l)))
+                             (values (smart-branch p m l* r) obj))
+                           (let-values (((r* obj) (search r)))
+                             (values (smart-branch p m l r*) obj)))
+                       (failure (lambda (obj)                 ; insert
+                                  (values (trie-join key 0 key p m t) obj))
+                                (lambda (obj)                 ; ignore
+                                  (values t obj))))))))))
+       (search trie)))))
