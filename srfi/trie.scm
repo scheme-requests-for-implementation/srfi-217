@@ -1,9 +1,17 @@
-;;; FIXME:
-;;;
-;;; * Bitmap compression.  Dense trees waste space at the moment.
-;;;
-;;; * Too much duplication of the trie-traversing algorithm
-;;;   with minor variations.  Unify procedures where possible.
+(define-record-type <leaf>
+  (raw-leaf prefix bitmap)
+  leaf?
+  (prefix leaf-prefix)
+  (bitmap leaf-bitmap))
+
+(define (leaf prefix bitmap)
+  (and (fxpositive? bitmap) (raw-leaf prefix bitmap)))
+
+;; Gives the maximum number of integers storable in a single leaf.
+(define leaf-bitmap-size (expt 2 (exact (floor (log fx-width 2)))))
+
+(define suffix-mask (- leaf-bitmap-size 1))
+(define prefix-mask (fxnot suffix-mask))
 
 (define-record-type <branch>
   (branch prefix branching-bit left right)
@@ -56,20 +64,32 @@
 (define (zero-bit? k m)
   (fxzero? (fxand k m)))
 
-(define (trie-insert trie key)
+(define (isuffix k)
+  (fxand k suffix-mask))
+
+(define (iprefix k)
+  (fxand k prefix-mask))
+
+(define (ibitmap k)
+  (fxarithmetic-shift 1 (isuffix k)))
+
+(define (trie-insert-parts trie prefix bitmap)
   (letrec
    ((ins
      (lambda (t)
-       (cond ((not t) key)  ; new leaf
-             ((integer? t)
-              (if (fx=? t key) t (trie-join key 0 key t 0 t)))
+       (cond ((not t) (raw-leaf prefix bitmap))
+             ((leaf? t)
+              (let ((p (leaf-prefix t)))
+                (if (fx=? prefix p)
+                    (raw-leaf prefix (fxior (leaf-bitmap t) bitmap))
+                    (trie-link prefix (raw-leaf prefix bitmap) p t))))
              (else
               (let*-branch (((p m l r) t))
-                (if (match-prefix? key p m)
-                    (if (zero-bit? key m)
+                (if (match-prefix? prefix p m)
+                    (if (zero-bit? prefix m)
                         (branch p m (ins l) r)
                         (branch p m l (ins r)))
-                    (trie-join key 0 key p m t))))))))
+                    (trie-link prefix (raw-leaf prefix bitmap) p t))))))))
     (ins trie)))
 
 (define (trie-join prefix1 mask1 trie1 prefix2 mask2 trie2)
