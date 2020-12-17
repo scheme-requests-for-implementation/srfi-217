@@ -214,15 +214,17 @@
                          (trie-remove pred (branch-left trie))
                          (trie-remove pred (branch-right trie))))))
 
-(define (%trie-find-leftmost trie)
-  (if (or (not trie) (integer? trie))
-      trie
-      (%trie-find-leftmost (branch-left trie))))
+(define (%trie-find-least trie)
+  (and trie
+       (if (leaf? trie)
+           (fx+ (leaf-prefix trie) (fxfirst-set-bit (leaf-bitmap trie)))
+           (%trie-find-least (branch-left trie)))))
 
-(define (%trie-find-rightmost trie)
-  (if (or (not trie) (integer? trie))
-      trie
-      (%trie-find-rightmost (branch-right trie))))
+(define (%trie-find-greatest trie)
+  (and trie
+       (if (leaf? trie)
+           (fx+ (leaf-prefix trie) (highest-set-bit (leaf-bitmap trie)))
+           (%trie-find-greatest (branch-right trie)))))
 
 ;;;; Comparisons
 
