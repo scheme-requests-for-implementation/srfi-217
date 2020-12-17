@@ -92,6 +92,9 @@
                     (trie-link prefix (raw-leaf prefix bitmap) p t))))))))
     (ins trie)))
 
+(define (trie-insert trie key)
+  (trie-insert-parts trie (iprefix key) (ibitmap key)))
+
 (define (trie-join prefix1 mask1 trie1 prefix2 mask2 trie2)
   (let ((m (branching-bit prefix1 mask1 prefix2 mask2)))
     (if (zero-bit? prefix1 m)
@@ -100,8 +103,9 @@
 
 (define (trie-contains? trie key)
   (and trie
-       (if (integer? trie)
-           (fx=? key trie)
+       (if (leaf? trie)
+           (and (fx=? (iprefix key) (leaf-prefix trie))
+                (not (fxzero? (fxand (ibitmap key) (leaf-bitmap trie)))))
            (let*-branch (((p m l r) trie))
              (and (match-prefix? key p m)
                   (if (zero-bit? key m)
@@ -154,7 +158,7 @@
 
 (define (copy-trie trie)
   (and trie
-       (if (integer? trie)
+       (if (leaf? trie)
            trie
            (branch (branch-prefix trie)
                    (branch-branching-bit trie)
@@ -179,10 +183,18 @@
                         (smart-branch p m ol or))))))))
     (part trie)))
 
+(define (bitmap-filter pred bitmap)
+  (error "not implemented"))
+
 (define (trie-filter pred trie)
   (and trie
-       (if (integer? trie)
-           (and (pred trie) trie)
+       (if (leaf? trie)
+           (let ((p (leaf-prefix trie)))
+             (leaf
+              p
+              (bitmap-filter (lambda (b)
+                               (pred (fx+ p (fxfirst-set-bit b))))
+                             (leaf-bitmap trie))))
            (smart-branch (branch-prefix trie)
                          (branch-branching-bit trie)
                          (trie-filter pred (branch-left trie))
@@ -190,8 +202,13 @@
 
 (define (trie-remove pred trie)
   (and trie
-       (if (integer? trie)
-           (and (not (pred trie)) trie)
+       (if (leaf? trie)
+           (let ((p (leaf-prefix trie)))
+             (leaf
+              p
+              (bitmap-filter (lambda (b)
+                               (not (pred (fx+ p (fxfirst-set-bit b)))))
+                             (leaf-bitmap trie))))
            (smart-branch (branch-prefix trie)
                          (branch-branching-bit trie)
                          (trie-remove pred (branch-left trie))
