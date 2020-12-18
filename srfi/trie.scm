@@ -13,6 +13,15 @@
 (define suffix-mask (- leaf-bitmap-size 1))
 (define prefix-mask (fxnot suffix-mask))
 
+;; Shorthand for extracting leaf elements.
+(define-syntax let*-leaf
+  (syntax-rules ()
+    ((_ () e1 e2 ...) (begin e1 e2 ...))
+    ((_ (((p b) expr) . binds) . body)
+     (let ((lf expr))
+       (let ((p (leaf-prefix lf)) (b (leaf-bitmap lf)))
+         (let*-leaf binds . body))))))
+
 (define-record-type <branch>
   (branch prefix branching-bit left right)
   branch?
@@ -79,17 +88,17 @@
      (lambda (t)
        (cond ((not t) (raw-leaf prefix bitmap))
              ((leaf? t)
-              (let ((p (leaf-prefix t)))
+              (let*-leaf (((p b) t))
                 (if (fx=? prefix p)
-                    (raw-leaf prefix (fxior (leaf-bitmap t) bitmap))
-                    (trie-link prefix (raw-leaf prefix bitmap) p t))))
+                    (raw-leaf prefix (fxior b bitmap))
+                    (trie-join prefix 0 (raw-leaf prefix bitmap) p 0 t))))
              (else
               (let*-branch (((p m l r) t))
                 (if (match-prefix? prefix p m)
                     (if (zero-bit? prefix m)
                         (branch p m (ins l) r)
                         (branch p m l (ins r)))
-                    (trie-link prefix (raw-leaf prefix bitmap) p t))))))))
+                    (trie-join prefix 0 (raw-leaf prefix bitmap) p m t))))))))
     (ins trie)))
 
 (define (trie-insert trie key)
@@ -123,8 +132,13 @@
       (lambda (s t)
         (cond ((not s) t)
               ((not t) s)
-              ((integer? s) (insert t s))
-              ((integer? t) (insert s t))
+              ((and (leaf? s) (leaf? t))
+               (let*-leaf (((p b) s) ((q c) t))
+                 (if (fx=? p q)
+                     (raw-leaf p (fxior b c))
+                     (trie-join p 0 s q 0 t))))
+              ((leaf? s) (insert t s))
+              ((leaf? t) (insert s t))
               (else (merge-branches s t)))))
      (merge-branches
       (lambda (s t)
@@ -165,6 +179,28 @@
                    (copy-trie (branch-left trie))
                    (copy-trie (branch-right trie))))))
 
+;;;; Iteration
+
+;; Left branches are processed before right.
+(define (trie-fold proc nil trie)
+  (letrec
+   ((cata
+     (lambda (b t)
+       (cond ((not t) b)
+             ((leaf? t)
+              (fold-left-bits (leaf-prefix t) proc b (leaf-bitmap t)))
+             (else
+              (cata (cata b (branch-left t)) (branch-right t)))))))
+    (cata nil trie)))
+
+(define (fold-left-bits prefix proc nil bitmap)
+  (let loop ((bm bitmap) (acc nil))
+    (if (fxzero? bm)
+        acc
+        (let* ((mask (lowest-set-bit bm))
+               (bi (fxfirst-set-bit mask)))
+          (loop (fxxor bm mask) (proc acc (fx+ prefix bi)))))))
+
 (define (trie-partition pred trie)
   (letrec
    ((part
@@ -183,18 +219,18 @@
                         (smart-branch p m ol or))))))))
     (part trie)))
 
-(define (bitmap-filter pred bitmap)
-  (error "not implemented"))
+(define (bitmap-filter pred prefix bitmap)
+  (let loop ((i 0) (res 0))
+    (cond ((fx=? i leaf-bitmap-size) res)
+          ((and (fxbit-set? i bitmap) (pred (fx+ prefix i)))
+           (loop (fx+ i 1) (fxior res (fxarithmetic-shift 1 i))))
+          (else (loop (fx+ i 1) res)))))
 
 (define (trie-filter pred trie)
   (and trie
        (if (leaf? trie)
            (let ((p (leaf-prefix trie)))
-             (leaf
-              p
-              (bitmap-filter (lambda (b)
-                               (pred (fx+ p (fxfirst-set-bit b))))
-                             (leaf-bitmap trie))))
+             (leaf p (bitmap-filter pred p bm)))
            (smart-branch (branch-prefix trie)
                          (branch-branching-bit trie)
                          (trie-filter pred (branch-left trie))
