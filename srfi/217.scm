@@ -98,16 +98,22 @@
 (define (iset-min set)
   (assume (iset? set))
   (let ((trie (iset-trie set)))
-    (%trie-find-least (if (negative? (branch-branching-bit trie))
-                          (branch-right trie)
-                          (branch-left trie)))))
+    (%trie-find-least
+     (if (branch? trie)
+         (if (negative? (branch-branching-bit trie))
+             (branch-right trie)
+             (branch-left trie))
+         trie))))
 
 (define (iset-max set)
   (assume (iset? set))
   (let ((trie (iset-trie set)))
-    (%trie-find-greatest (if (negative? (branch-branching-bit trie))
-                             (branch-left trie)
-                             (branch-right trie)))))
+    (%trie-find-greatest
+     (if (branch? trie)
+         (if (negative? (branch-branching-bit trie))
+             (branch-left trie)
+             (branch-right trie))
+         trie))))
 
 ;;;; Updaters
 

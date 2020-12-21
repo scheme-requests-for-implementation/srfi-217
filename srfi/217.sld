@@ -43,7 +43,9 @@
           iset-open-interval iset-closed-interval iset-open-closed-interval
           iset-closed-open-interval iset-range= iset-range< iset-range<=
           iset-range> iset-range>=
-          iset-trie  ; debug
+          ;; debug
+          iset-trie
+          highest-set-bit
           )
 
   (include "trie.scm")
