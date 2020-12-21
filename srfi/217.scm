@@ -226,19 +226,11 @@
 (define (iset-fold proc nil set)
   (assume (procedure? proc))
   (assume (iset? set))
-  (letrec
-   ((cata
-     (lambda (b t)
-       (cond ((not t) b)
-             ((integer? t) (proc t b))
-             (else
-              (cata (cata b (branch-left t)) (branch-right t)))))))
-    (let ((trie (iset-trie set)))
-      (if (branch? trie)
-          (if (negative? (branch-branching-bit trie))
-              (cata (cata nil (branch-left trie)) (branch-right trie))
-              (cata (cata nil (branch-right trie)) (branch-left trie)))
-          (cata nil trie)))))
+  (let ((trie (iset-trie set)))
+    (if (and (branch? trie) (positive? (branch-branching-bit trie)))
+	(trie-fold proc (trie-fold proc nil (branch-right trie))
+			(branch-left trie))
+	(trie-fold proc nil trie))))
 
 (define (iset-filter pred set)
   (assume (procedure? pred))
@@ -266,7 +258,7 @@
   (raw-iset (copy-trie (iset-trie set))))
 
 (define (iset->list set)
-  (iset-fold cons '() set))
+  (iset-fold xcons '() set))
 
 ;;;; Comparison
 
