@@ -1,6 +1,7 @@
 (define-library (srfi 217)
   (import (scheme base)
           (scheme case-lambda)
+          (scheme inexact)
           (only (srfi 1) fold every)
           (srfi 143))
 
