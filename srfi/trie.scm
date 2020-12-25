@@ -270,7 +270,9 @@
 
 (define (trie=? trie1 trie2)
   (cond ((not (or trie1 trie2)) #t)
-        ((and (integer? trie1) (integer? trie2)) (fx=? trie1 trie2))
+        ((and (leaf? trie1) (leaf? trie2))
+         (and (fx=? (leaf-prefix trie1) (leaf-prefix trie2))
+              (fx=? (leaf-bitmap trie1) (leaf-bitmap trie2))))
         ((and (branch? trie1) (branch? trie2))
          (let*-branch (((p m l1 r1) trie1) ((q n l2 r2) trie2))
            (and (fx=? m n) (fx=? p q) (trie=? l1 l2) (trie=? r1 r2))))
