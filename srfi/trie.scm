@@ -165,6 +165,11 @@
                  (trie-join p m s q n t)))))))
     (merge trie1 trie2)))
 
+;; Construct a leaf only if the bitmap is non-zero.
+(define (smart-leaf prefix bitmap)
+  (and (not (fxzero? bitmap))
+       (leaf prefix bitmap)))
+
 ;; Construct a branch only if the subtrees are non-empty.
 (define (smart-branch prefix mask trie1 trie2)
   (cond ((not trie1) trie2)
@@ -205,15 +210,25 @@
                (bi (fxfirst-set-bit mask)))
           (loop (fxxor bm mask) (proc acc (fx+ prefix bi)))))))
 
+(define (bitmap-partition pred prefix bitmap)
+  (let loop ((i 0) (in 0) (out 0))
+    (cond ((fx=? i leaf-bitmap-size) (values in out))
+          ((fxbit-set? i bitmap)
+           (let ((bit (fxarithmetic-shift 1 i)))
+             (if (pred (fx+ prefix i))
+                 (loop (fx+ i 1) (fxior in bit) out)
+                 (loop (fx+ i 1) in (fxior out bit)))))
+          (else (loop (fx+ i 1) in out)))))
+
 (define (trie-partition pred trie)
   (letrec
    ((part
      (lambda (t)
        (cond ((not t) (values #f #f))
-             ((integer? t)
-              (if (pred t)
-                  (values t #f)
-                  (values #f t)))
+             ((leaf? t)
+              (let*-leaf (((p bm) t))
+                (let-values (((in out) (bitmap-partition pred p bm)))
+                  (values (smart-leaf p in) (smart-leaf p out)))))
              (else
               (let-values (((p) (branch-prefix t))
                            ((m) (branch-branching-bit t))
