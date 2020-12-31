@@ -249,8 +249,7 @@
   (and trie
        (if (leaf? trie)
            (let*-leaf (((p bm) trie))
-             (let ((bm* (bitmap-filter pred p bm)))
-               (if (fxzero? bm*) #f (leaf p bm*))))
+             (smart-leaf p (bitmap-filter pred p bm)))
            (smart-branch (branch-prefix trie)
                          (branch-branching-bit trie)
                          (trie-filter pred (branch-left trie))
@@ -260,8 +259,10 @@
   (and trie
        (if (leaf? trie)
            (let*-leaf (((p bm) (leaf-prefix trie)))
-             (let ((bm* (bitmap-filter (lambda (x) (not (pred x))) p bm)))
-               (if (fxzero? bm*) #f (leaf p bm*))))
+             (smart-leaf p
+                         (bitmap-filter (lambda (x) (not (pred x)))
+                                        p
+                                        bm)))
            (smart-branch (branch-prefix trie)
                          (branch-branching-bit trie)
                          (trie-remove pred (branch-left trie))
