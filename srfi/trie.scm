@@ -367,12 +367,18 @@
                (else #t))))))      ; the prefixes disagree
     (disjoint? trie1 trie2)))
 
+(define (bitmap-delete bitmap prefix key)
+  (fxxor bitmap
+         (fxarithmetic-shift 1 (fx- key prefix))))
+
 (define (trie-delete trie key)
   (letrec
    ((update
      (lambda (t)
        (cond ((not t) #f)
-             ((integer? t) (if (fx=? t key) #f t))
+             ((leaf? t)
+              (let*-leaf (((p bm) t))
+                (smart-leaf p (bitmap-delete bm p key))))
              (else (update-branch t)))))
     (update-branch
      (lambda (t)
