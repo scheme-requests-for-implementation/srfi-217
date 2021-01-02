@@ -1,3 +1,9 @@
+;;; A trie is represented by #f (the empty trie), a leaf, or a branch.
+;;;
+;;; Throughout this code, the empty trie (#f) is always returned
+;;; as an explicit value, not, e.g. as the default value of an
+;;; (and ...) expression, to clarify its use as a trie value.
+
 (define-record-type <leaf>
   (raw-leaf prefix bitmap)
   leaf?
@@ -427,24 +433,30 @@
                     (trie-join key 0 key p m t))))))))
     (ins trie)))
 
+;; Construct a trie which forms the intersection of the two tries.
+;; Runs in O(n+m) time.
 (define (trie-intersection trie1 trie2)
   (letrec
    ((intersect
      (lambda (s t)
        (cond ((or (not s) (not t)) #f)
-             ((and (integer? s) (integer? t)) (and (fx=? s t) s))
-             ((integer? s) (ins-int s t))
-             ((integer? t) (ins-int t s))
+             ((leaf? s) (intersect/leaf s t))
+             ((leaf? t) (intersect/leaf t s))
              (else (intersect-branches s t)))))
-    (ins-int
-     (lambda (n t)
-       (let lp ((t t))
-         (cond ((and (integer? t) (fx=? n t)) n)
-               ((branch? t)
-                (let*-branch (((p m l r) t))
-                  (and (match-prefix? n p m)
-                       (if (zero-bit? n m) (lp l) (lp r)))))
-               (else #f)))))
+    (intersect/leaf
+     (lambda (l t)
+       (let*-leaf (((p bm) l))
+         (let lp ((t t))
+           (cond ((not t) #f)
+                 ((leaf? t)
+                  (if (fx=? p (leaf-prefix t))
+                      (leaf p (fxand bm (leaf-bitmap t)))
+                      #f))          ; disjoint
+                 (else              ; branch
+                  (let*-branch (((q m l r) t))
+                    (if (match-prefix? p q m)
+                        (if (zero-bit? p m) (lp l) (lp r))
+                        #f))))))))  ; disjoint
     (intersect-branches
      (lambda (s t)
        (let*-branch (((p m sl sr) s) ((q n tl tr) t))
