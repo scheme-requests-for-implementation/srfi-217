@@ -357,6 +357,8 @@
   (case-lambda
     ((set) (iset-copy set))
     ((set1 set2)
+     (assume (iset? set1))
+     (assume (iset? set2))
      (raw-iset (trie-intersection (iset-trie set1) (iset-trie set2))))
     ((set . rest)
      (assume (iset? set))
@@ -373,6 +375,8 @@
   (case-lambda
     ((set) (iset-copy set))
     ((set1 set2)              ; fast path
+     (assume (iset? set1))
+     (assume (iset? set2))
      (raw-iset (trie-difference (iset-trie set1) (iset-trie set2))))
     ((set . rest)
      (assume (iset? set))
