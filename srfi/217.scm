@@ -61,8 +61,6 @@
           (assume (valid-integer? n))
           (lp (trie-insert trie n) (successor seed))))))
 
-;; TODO: Bitmap compression will enable a much more efficient version
-;; of this.
 (define (make-iset-range low high)
   (assume (valid-integer? low))
   (assume (valid-integer? high))
@@ -401,9 +399,6 @@
 
 (define (iset-range= set k)
   (if (iset-contains? set k) (iset k) (iset)))
-
-;;; FIXME: The following procedures are implemented trivially in terms
-;;; of iset-filter.  Better versions to come.
 
 (define (iset-open-interval set low high)
   (assume (valid-integer? low))
