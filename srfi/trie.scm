@@ -10,6 +10,7 @@
   (prefix leaf-prefix)
   (bitmap leaf-bitmap))
 
+;; Construct a leaf only if the bitmap is non-zero.
 (define (leaf prefix bitmap)
   (if (fxpositive? bitmap)
       (raw-leaf prefix bitmap)
@@ -173,11 +174,6 @@
                  (trie-join p m s q n t)))))))
     (merge trie1 trie2)))
 
-;; Construct a leaf only if the bitmap is non-zero.
-(define (smart-leaf prefix bitmap)
-  (and (not (fxzero? bitmap))
-       (leaf prefix bitmap)))
-
 ;; Construct a branch only if the subtrees are non-empty.
 (define (smart-branch prefix mask trie1 trie2)
   (cond ((not trie1) trie2)
@@ -236,7 +232,7 @@
              ((leaf? t)
               (let*-leaf (((p bm) t))
                 (let-values (((in out) (bitmap-partition pred p bm)))
-                  (values (smart-leaf p in) (smart-leaf p out)))))
+                  (values (leaf p in) (leaf p out)))))
              (else
               (let-values (((p) (branch-prefix t))
                            ((m) (branch-branching-bit t))
@@ -257,7 +253,7 @@
   (cond ((not trie) #f)
         ((leaf? trie)
          (let*-leaf (((p bm) trie))
-           (smart-leaf p (bitmap-filter pred p bm))))
+           (leaf p (bitmap-filter pred p bm))))
         (else
          (smart-branch (branch-prefix trie)
                        (branch-branching-bit trie)
@@ -268,10 +264,10 @@
   (cond ((not trie) #f)
         ((leaf? trie)
          (let*-leaf (((p bm) (leaf-prefix trie)))
-           (smart-leaf p
-                       (bitmap-filter (lambda (x) (not (pred x)))
-                                      p
-                                      bm))))
+           (leaf p
+                 (bitmap-filter (lambda (x) (not (pred x)))
+                                p
+                                bm))))
         (else
          (smart-branch (branch-prefix trie)
                        (branch-branching-bit trie)
@@ -408,7 +404,7 @@
        (cond ((not t) #f)
              ((leaf? t)
               (let*-leaf (((p bm) t))
-                (smart-leaf p (bitmap-delete bm p key))))
+                (leaf p (bitmap-delete bm p key))))
              (else (update-branch t)))))
     (update-branch
      (lambda (t)
