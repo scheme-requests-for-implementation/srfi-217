@@ -360,17 +360,11 @@
      (raw-iset (trie-intersection (iset-trie set1) (iset-trie set2))))
     ((set . rest)
      (assume (iset? set))
-     ;; If successive intersections result in an empty set,
-     ;; return it immediately.
-     (call-with-current-continuation
-      (lambda (return)
-        (raw-iset (fold (lambda (s t)
-                          (assume (iset? s))
-                          (if t
-                              (trie-intersection (iset-trie s) t)
-                              (return (iset))))
-                  (iset-trie set)
-                  rest)))))))
+     (raw-iset (fold (lambda (s t)
+                       (assume (iset? s))
+                       (trie-intersection (iset-trie s) t))
+               (iset-trie set)
+               rest)))))
 
 (define (iset-intersection! set . rest)
   (apply iset-intersection set rest))
