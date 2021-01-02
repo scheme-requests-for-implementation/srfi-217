@@ -536,15 +536,15 @@
 ;; Return a trie containing all the elements of `trie' which are
 ;; less than k, if `inclusive' is false, or less than or equal to
 ;; k if `inclusive' is true.
+;; Runs in O(min(n, W)) time.
 (define (subtrie< trie k inclusive)
   (letrec
     ((split
       (lambda (t)
         (cond ((not t) #f)
-	      ((integer? t)
-	       (cond ((fx<? t k) t)
-		     ((and (fx=? t k) inclusive) t)
-		     (else #f)))
+              ((leaf? t)
+               (let*-leaf (((p bm) t))
+                 (leaf p (bitmap-split< k inclusive p bm))))
               (else
                (let*-branch (((p m l r) t))
                  (if (match-prefix? k p m)
@@ -558,18 +558,31 @@
             (trie-union (split (branch-left trie)) (branch-right trie)))
         (split trie))))
 
+;; Return a bitmap containing all elements in `bitmap' that are
+;; less than/less than or equal to k.
+(define (bitmap-split< k inclusive prefix bitmap)
+  (let ((kp (iprefix k)) (kb (ibitmap k)))
+    (cond ((fx>? kp prefix) bitmap)
+          ((fx=? kp prefix)
+           (fxand bitmap
+                  (fx- (if inclusive
+                           (fxarithmetic-shift kb 1)
+                           kb)
+                       1)))
+          (else 0))))
+
 ;; Return a trie containing all the elements of `trie' which are
 ;; greater than k, if `inclusive' is false, or greater than or equal
 ;; to k if `inclusive' is true.
+;; Runs in O(min(n, W)) time.
 (define (subtrie> trie k inclusive)
   (letrec
    ((split
      (lambda (t)
        (cond ((not t) #f)
-	     ((integer? t)
-	      (cond ((fx>? t k) t)
-		    ((and (fx=? t k) inclusive) t)
-		    (else #f)))
+             ((leaf? t)
+              (let*-leaf (((p bm) t))
+                (leaf p (bitmap-split> k inclusive p bm))))
 	     (else
 	      (let*-branch (((p m l r) t))
 		(if (match-prefix? k p m)
@@ -582,6 +595,18 @@
 	    (trie-union (split (branch-right trie)) (branch-left trie))
 	    (split (branch-left trie)))
 	(split trie))))
+
+;; Return a bitmap containing all elements in `bitmap' that are
+;; greater than/greater than or equal to `k'.
+(define (bitmap-split> k inclusive prefix bitmap)
+  (let ((kp (iprefix k)) (kb (ibitmap k)))
+    (cond ((fx<? kp prefix) bitmap)
+          ((fx=? kp prefix)
+           (fxand bitmap
+                  (fxneg (if inclusive
+                             kb
+                             (fxarithmetic-shift kb 1)))))
+          (else 0))))
 
 ;; Return a trie containing all the elements of `trie' which are
 ;; greater than/greater than or equal to a and less than/less than
