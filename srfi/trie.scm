@@ -475,26 +475,33 @@
                (else #f))))))
     (intersect trie1 trie2)))
 
+;; Construct a trie containing the elements of trie1 not found in trie2.
+;; Runs in O(n+m) time.
 (define (trie-difference trie1 trie2)
   (letrec
    ((difference
      (lambda (s t)
        (cond ((not s) #f)
              ((not t) s)
-             ((integer? s) (diff-int s t))
-             ((integer? t) (trie-delete s t))
+             ((leaf? s) (diff/leaf s t))
+             ((leaf? t)
+              (%trie-delete-bitmap s (leaf-prefix t) (leaf-bitmap t)))
              (else (branch-difference s t)))))
-    (diff-int
-     (lambda (n t)
-       (cond ((not t) n)
-             ((integer? t) (if (fx=? t n) #f n))
-             (else
-              (let*-branch (((p m l r) t))
-                (if (match-prefix? n p m)
-                    (if (zero-bit? n m)
-                        (diff-int n l)
-                        (diff-int n r))
-                    n))))))
+    (diff/leaf
+     (lambda (lf t)
+       (let*-leaf (((p bm) lf))
+         (let lp ((t t))
+           (cond ((not t) lf)
+                 ((leaf? t)
+                  (let*-leaf (((q c) t))
+                    (if (fx=? p q)
+                        (leaf p (fxand bm (fxnot c)))
+                        lf))) ; disjoint
+                 (else        ; branch
+                  (let*-branch (((q m l r) t))
+                    (if (match-prefix? p q m)
+                        (if (zero-bit? p m) (lp l) (lp r))
+                        lf))))))))
     (branch-difference
      (lambda (s t)
        (let*-branch (((p m sl sr) s) ((q n tl tr) t))
@@ -510,6 +517,21 @@
                     (difference s tr)))
                (else s))))))
     (difference trie1 trie2)))
+
+;; Delete all values described by `bitmap' from `trie'.
+(define (%trie-delete-bitmap trie prefix bitmap)
+  (cond ((not trie) #f)
+        ((leaf? trie)
+         (if (fx=? prefix (leaf-prefix trie))
+             (leaf prefix (fxand (leaf-bitmap trie) (fxnot bitmap)))
+             trie))  ; disjoint
+        (else        ; branch
+         (let*-branch (((p m l r) trie))
+           (if (match-prefix? prefix p m)
+               (if (zero-bit? prefix m)
+                   (smart-branch p m (%trie-delete-bitmap l prefix bitmap) r)
+                   (smart-branch p m l (%trie-delete-bitmap r prefix bitmap)))
+               trie)))))
 
 ;; Return a trie containing all the elements of `trie' which are
 ;; less than k, if `inclusive' is false, or less than or equal to
