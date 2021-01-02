@@ -11,7 +11,9 @@
   (bitmap leaf-bitmap))
 
 (define (leaf prefix bitmap)
-  (and (fxpositive? bitmap) (raw-leaf prefix bitmap)))
+  (if (fxpositive? bitmap)
+      (raw-leaf prefix bitmap)
+      #f))
 
 ;; Gives the maximum number of integers storable in a single leaf.
 (define leaf-bitmap-size (expt 2 (exact (floor (log fx-width 2)))))
@@ -186,13 +188,13 @@
   (trie-merge trie-insert s t))
 
 (define (copy-trie trie)
-  (and trie
-       (if (leaf? trie)
-           trie
-           (branch (branch-prefix trie)
-                   (branch-branching-bit trie)
-                   (copy-trie (branch-left trie))
-                   (copy-trie (branch-right trie))))))
+  (cond ((not trie) #f)
+        ((leaf? trie) trie)
+        (else
+         (branch (branch-prefix trie)
+                 (branch-branching-bit trie)
+                 (copy-trie (branch-left trie))
+                 (copy-trie (branch-right trie))))))
 
 ;;;; Iteration
 
@@ -252,27 +254,29 @@
           (else (loop (fx+ i 1) res)))))
 
 (define (trie-filter pred trie)
-  (and trie
-       (if (leaf? trie)
-           (let*-leaf (((p bm) trie))
-             (smart-leaf p (bitmap-filter pred p bm)))
-           (smart-branch (branch-prefix trie)
-                         (branch-branching-bit trie)
-                         (trie-filter pred (branch-left trie))
-                         (trie-filter pred (branch-right trie))))))
+  (cond ((not trie) #f)
+        ((leaf? trie)
+         (let*-leaf (((p bm) trie))
+           (smart-leaf p (bitmap-filter pred p bm))))
+        (else
+         (smart-branch (branch-prefix trie)
+                       (branch-branching-bit trie)
+                       (trie-filter pred (branch-left trie))
+                       (trie-filter pred (branch-right trie))))))
 
 (define (trie-remove pred trie)
-  (and trie
-       (if (leaf? trie)
-           (let*-leaf (((p bm) (leaf-prefix trie)))
-             (smart-leaf p
-                         (bitmap-filter (lambda (x) (not (pred x)))
-                                        p
-                                        bm)))
-           (smart-branch (branch-prefix trie)
-                         (branch-branching-bit trie)
-                         (trie-remove pred (branch-left trie))
-                         (trie-remove pred (branch-right trie))))))
+  (cond ((not trie) #f)
+        ((leaf? trie)
+         (let*-leaf (((p bm) (leaf-prefix trie)))
+           (smart-leaf p
+                       (bitmap-filter (lambda (x) (not (pred x)))
+                                      p
+                                      bm))))
+        (else
+         (smart-branch (branch-prefix trie)
+                       (branch-branching-bit trie)
+                       (trie-remove pred (branch-left trie))
+                       (trie-remove pred (branch-right trie))))))
 
 (define (%trie-find-least trie)
   (and trie
