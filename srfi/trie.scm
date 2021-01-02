@@ -292,6 +292,16 @@
            (and (fx=? m n) (fx=? p q) (trie=? l1 l2) (trie=? r1 r2))))
         (else #f)))
 
+(define (subset-compare-leaves l1 l2)
+  (let*-leaf (((p b) l1) ((q c) l2))
+    (if (fx=? p q)
+        (if (fx=? b c)
+            'equal
+            (if (fxzero? (fxand b (fxnot c)))
+                'less
+                'greater))
+        'greater)))  ; disjoint
+
 ;; Returns the symbol 'less' if trie1 is a proper subset of trie2,
 ;; 'equal' if they are the same, and 'greater' otherwise.  NB that
 ;; disjoint sets will compare as greater.
@@ -304,16 +314,16 @@
        (cond ((eqv? s t) 'equal)
              ((not s) 'less)
              ((not t) 'greater)  ; disjoint
-             ((and (integer? s) (integer? t))
-              (if (fx=? s t) 'equal 'greater))
-             ((integer? s)             ; leaf / branch
-              (let*-branch (((p m l r) t))
-                (if (match-prefix? s p m)
-                    (let ((res (compare s (if (zero-bit? s m)
-                                              (branch-left t)
-                                              (branch-right t)))))
-                      (if (eqv? res 'greater) res 'less)))))
-             ((integer? t) 'greater)   ; branch / leaf
+             ((and (leaf? s) (leaf? t)) (subset-compare-leaves s t))
+             ((leaf? s)             ; leaf / branch
+              (let*-leaf (((p _) s))
+                (let*-branch (((q m l r) t))
+                  (if (match-prefix? p q m)
+                      (case (compare s (if (zero-bit? p m) l r))
+                        ((greater) 'greater)
+                        (else 'less))
+                      'greater))))       ; disjoint
+             ((leaf? t) 'greater)        ; branch / leaf
              (else (compare-branches s t)))))
     (compare-branches
      (lambda (s t)
