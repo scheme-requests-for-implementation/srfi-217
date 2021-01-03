@@ -334,7 +334,7 @@
       (iset-copy set)
       (raw-iset (fold (lambda (s t)
                         (assume (iset? s))
-                        (trie-merge trie-insert (iset-trie s) t))
+                        (trie-union (iset-trie s) t))
                       (iset-trie set)
                       rest))))
 
