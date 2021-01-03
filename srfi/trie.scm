@@ -303,7 +303,7 @@
 (define (trie-remove pred trie)
   (cond ((not trie) #f)
         ((leaf? trie)
-         (let*-leaf (((p bm) (leaf-prefix trie)))
+         (let*-leaf (((p bm) trie))
            (leaf p
                  (bitmap-filter (lambda (x) (not (pred x)))
                                 p
