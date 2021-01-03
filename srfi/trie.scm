@@ -211,8 +211,8 @@
                 (let*-branch (((q m l r) t))
                   (if (match-prefix? p q m)
                       (if (zero-bit? p m)
-                          (branch p m (ins l) r)
-                          (branch p m l (ins r)))
+                          (branch q m (ins l) r)
+                          (branch q m l (ins r)))
                       (trie-join p 0 lf q 0 t))))))))
       (ins trie))))
 
