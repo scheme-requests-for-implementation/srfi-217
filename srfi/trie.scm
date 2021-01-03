@@ -139,7 +139,11 @@
       (negative? mask1)
       (fx>? mask1 mask2)))
 
-(define (trie-merge insert trie1 trie2)
+;; Merge two tries.  The exact contents of the result depend on the
+;; `insert-leaf' function, which is used to merge leaves into branches.
+;; Taking the running time of `insert-leaf' to be constant, runs in
+;; O(n+m) time.
+(define (trie-merge insert-leaf trie1 trie2)
   (letrec
     ((merge
       (lambda (s t)
@@ -150,8 +154,8 @@
                  (if (fx=? p q)
                      (raw-leaf p (fxior b c))
                      (trie-join p 0 s q 0 t))))
-              ((leaf? s) (insert t s))
-              ((leaf? t) (insert s t))
+              ((leaf? s) (insert-leaf t s))
+              ((leaf? t) (insert-leaf s t))
               (else (merge-branches s t)))))
      (merge-branches
       (lambda (s t)
@@ -180,8 +184,37 @@
         ((not trie2) trie1)
         (else (branch prefix mask trie1 trie2))))
 
-(define (trie-union s t)
-  (trie-merge trie-insert s t))
+(define (trie-union trie1 trie2)
+  (trie-merge (lambda (s t) (%insert-leaf/proc fxior s t))
+              trie1
+              trie2))
+
+(define (trie-xor trie1 trie2)
+  (trie-merge (lambda (s t) (%insert-leaf/proc fxxor s t))
+              trie1
+              trie2))
+
+;; Insert the elements of `lf' into `trie', combining bitmaps with
+;; the binary bitwise operation `fxcombine'.
+(define (%insert-leaf/proc fxcombine trie lf)
+  (let*-leaf (((p bm) lf))
+    (letrec
+     ((ins
+       (lambda (t)
+         (cond ((not t) lf)  ; a whole new leaf
+               ((leaf? t)
+                (let*-leaf (((q bm*) t))
+                  (if (fx=? p q)
+                      (raw-leaf p (fxcombine bm bm*))
+                      (trie-join p 0 lf q 0 t))))
+               (else         ; branch
+                (let*-branch (((q m l r) t))
+                  (if (match-prefix? p q m)
+                      (if (zero-bit? p m)
+                          (branch p m (ins l) r)
+                          (branch p m l (ins r)))
+                      (trie-join p 0 lf q 0 t))))))))
+      (ins trie))))
 
 (define (copy-trie trie)
   (cond ((not trie) #f)
@@ -415,23 +448,6 @@
                  (smart-branch p m l (update r)))
              t)))))  ; key doesn't occur in t
     (update trie)))
-
-;; Identical to trie-insert, but delete key if it exists.
-(define (trie-xor-insert trie key)
-  (letrec
-   ((ins
-     (lambda (t)
-       (cond ((not t) key)  ; new leaf
-             ((integer? t)
-              (if (fx=? t key) #f (trie-join key 0 key t 0 t)))
-             (else
-              (let*-branch (((p m l r) t))
-                (if (match-prefix? key p m)
-                    (if (zero-bit? key m)
-                        (smart-branch p m (ins l) r)
-                        (smart-branch p m l (ins r)))
-                    (trie-join key 0 key p m t))))))))
-    (ins trie)))
 
 ;; Construct a trie which forms the intersection of the two tries.
 ;; Runs in O(n+m) time.

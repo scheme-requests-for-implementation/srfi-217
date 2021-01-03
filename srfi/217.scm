@@ -387,7 +387,7 @@
   (if (eqv? set1 set2)  ; quick check
       (iset)
       (raw-iset
-       (trie-merge trie-xor-insert (iset-trie set1) (iset-trie set2)))))
+       (trie-xor (iset-trie set1) (iset-trie set2)))))
 
 (define (iset-xor! set1 set2) (iset-xor set1 set2))
 
