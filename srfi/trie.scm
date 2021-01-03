@@ -245,7 +245,7 @@
         acc
         (let* ((mask (lowest-set-bit bm))
                (bi (fxfirst-set-bit mask)))
-          (loop (fxxor bm mask) (proc acc (fx+ prefix bi)))))))
+          (loop (fxxor bm mask) (proc (fx+ prefix bi) acc))))))
 
 (define (bitmap-partition pred prefix bitmap)
   (let loop ((i 0) (in 0) (out 0))

@@ -264,7 +264,7 @@
   (raw-iset (copy-trie (iset-trie set))))
 
 (define (iset->list set)
-  (iset-fold xcons '() set))
+  (iset-fold cons '() set))
 
 ;;;; Comparison
 
