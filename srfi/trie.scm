@@ -633,9 +633,14 @@
    ((interval
      (lambda (t)
        (cond ((not t) #f)
-             ((integer? t) (and ((if low-inclusive fx>=? fx>?) t a)
-                                ((if high-inclusive fx<=? fx<?) t b)
-                                t))
+             ((leaf? t)
+              (let*-leaf (((p bm) t))
+                (leaf p (bitmap-interval p
+                                         bm
+                                         a
+                                         b
+                                         low-inclusive
+                                         high-inclusive))))
              (else (branch-interval t)))))
     (branch-interval
      (lambda (t)
@@ -662,6 +667,27 @@
 	      (else (trie-union (subtrie> (branch-right trie) a low-inclusive)
 	                        (subtrie< (branch-left trie) b high-inclusive))))
 	(interval trie))))
+
+;; Return a bitmap containing the elements of bitmap that are within
+;; the interval defined by a, b.
+(define (bitmap-interval prefix bitmap low high low-inclusive high-inclusive)
+  (let ((lp (iprefix low))
+        (lb (ibitmap low))
+        (hp (iprefix high))
+        (hb (ibitmap high)))
+    (let ((low-mask (fxneg (if low-inclusive    ; mask everything above `low'
+                               lb
+                               (fxarithmetic-shift lb 1))))
+          (high-mask (fx- (if high-inclusive    ; mask everything below `high'
+                              (fxarithmetic-shift hb 1)
+                              hb)
+                          1)))
+      (cond ((fx<? prefix hp)
+             (cond ((fx<? prefix lp) 0)
+                   ((fx>? prefix lp) bitmap)
+                   (else (fxand low-mask bitmap))))
+            ((fx>? prefix hp) 0)
+            (else (fxand (fxand low-mask high-mask) bitmap))))))
 
 ;; Search trie for key, and construct a new trie using the results of
 ;; failure and success.
