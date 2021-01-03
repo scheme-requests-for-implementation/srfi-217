@@ -225,6 +225,13 @@
                  (copy-trie (branch-left trie))
                  (copy-trie (branch-right trie))))))
 
+(define (trie-size trie)
+  (let accum ((siz 0) (t trie))
+    (cond ((not t) siz)
+          ((leaf? t) (+ siz (fxbit-count (leaf-bitmap t))))
+          (else (accum (accum siz (branch-left t))
+                       (branch-right t))))))
+
 ;;;; Iteration
 
 ;; Left branches are processed before right.

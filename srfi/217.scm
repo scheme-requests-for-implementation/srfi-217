@@ -175,11 +175,7 @@
 
 (define (iset-size set)
   (assume (iset? set))
-  (let lp ((acc 0) (t (iset-trie set)))
-    (cond ((not t) acc)
-          ((integer? t) (+ acc 1))
-          (else
-           (lp (lp acc (branch-left t)) (branch-right t))))))
+  (trie-size (iset-trie set)))
 
 (define (iset-count pred set)
   (assume (procedure? pred))
