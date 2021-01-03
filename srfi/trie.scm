@@ -708,21 +708,29 @@
                             (values key obj))
                           (lambda (obj)          ; ignore
                             (values #f obj))))
-                ((integer? t)
-                 (if (fx=? t key)
-                     (success key
-                              (lambda (elt obj)  ; discard the new trie
-                                (if (eqv? elt key)
-                                    (values key obj)
-                                    (abort (trie-insert
-                                            (trie-delete trie key)
-                                            elt)
-                                           obj)))
-                              (lambda (obj) (values #f obj)))
-                     (failure (lambda (obj)                   ; insert
-                                (values (trie-join key 0 key t 0 t) obj))
-                              (lambda (obj)                   ; ignore
-                                (values #f obj)))))
+                ((leaf? t)
+                 (let*-leaf (((p bm) t))
+                   (if (and (fx=? (iprefix key) p)
+                            (not (fxzero? (fxand (ibitmap key) bm))))
+                       (success key
+                                (lambda (elt obj)  ; discard the new trie
+                                  (if (eqv? elt key)
+                                      (values key obj)
+                                      (abort (trie-insert
+                                              (trie-delete trie key)
+                                              elt)
+                                              obj)))
+                                (lambda (obj)
+                                  (values (leaf p (bitmap-delete bm p key))
+                                          obj)))
+                       (failure (lambda (obj)                   ; insert
+                                  (let ((lf (raw-leaf (iprefix key)
+                                                      (ibitmap key))))
+                                    (values
+                                     (trie-join (iprefix key) 0 lf p 0 t)
+                                     obj)))
+                                (lambda (obj)                   ; ignore
+                                  (values #f obj))))))
                 (else
                  (let*-branch (((p m l r) t))
                    (if (match-prefix? key p m)
