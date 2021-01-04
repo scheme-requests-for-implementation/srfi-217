@@ -96,22 +96,22 @@
 (define (iset-min set)
   (assume (iset? set))
   (let ((trie (iset-trie set)))
-    (if (branch? trie)
-        (%trie-find-leftmost
+    (%trie-find-least
+     (if (branch? trie)
          (if (negative? (branch-branching-bit trie))
              (branch-right trie)
-             (branch-left trie)))
-        trie)))  ; #f or leaf
+             (branch-left trie))
+         trie))))
 
 (define (iset-max set)
   (assume (iset? set))
   (let ((trie (iset-trie set)))
-    (if (branch? trie)
-        (%trie-find-rightmost
+    (%trie-find-greatest
+     (if (branch? trie)
          (if (negative? (branch-branching-bit trie))
              (branch-left trie)
-             (branch-right trie)))
-        trie)))  ; #f or leaf
+             (branch-right trie))
+         trie))))
 
 ;;;; Updaters
 
@@ -173,11 +173,7 @@
 
 (define (iset-size set)
   (assume (iset? set))
-  (let lp ((acc 0) (t (iset-trie set)))
-    (cond ((not t) acc)
-          ((integer? t) (+ acc 1))
-          (else
-           (lp (lp acc (branch-left t)) (branch-right t))))))
+  (trie-size (iset-trie set)))
 
 (define (iset-count pred set)
   (assume (procedure? pred))
@@ -230,19 +226,11 @@
 (define (iset-fold proc nil set)
   (assume (procedure? proc))
   (assume (iset? set))
-  (letrec
-   ((cata
-     (lambda (b t)
-       (cond ((not t) b)
-             ((integer? t) (proc t b))
-             (else
-              (cata (cata b (branch-left t)) (branch-right t)))))))
-    (let ((trie (iset-trie set)))
-      (if (branch? trie)
-          (if (negative? (branch-branching-bit trie))
-              (cata (cata nil (branch-left trie)) (branch-right trie))
-              (cata (cata nil (branch-right trie)) (branch-left trie)))
-          (cata nil trie)))))
+  (let ((trie (iset-trie set)))
+    (if (and (branch? trie) (positive? (branch-branching-bit trie)))
+	(trie-fold proc (trie-fold proc nil (branch-right trie))
+			(branch-left trie))
+	(trie-fold proc nil trie))))
 
 (define (iset-filter pred set)
   (assume (procedure? pred))
@@ -344,7 +332,7 @@
       (iset-copy set)
       (raw-iset (fold (lambda (s t)
                         (assume (iset? s))
-                        (trie-merge trie-insert (iset-trie s) t))
+                        (trie-union (iset-trie s) t))
                       (iset-trie set)
                       rest))))
 
@@ -391,7 +379,7 @@
   (if (eqv? set1 set2)  ; quick check
       (iset)
       (raw-iset
-       (trie-merge trie-xor-insert (iset-trie set1) (iset-trie set2)))))
+       (trie-xor (iset-trie set1) (iset-trie set2)))))
 
 (define (iset-xor! set1 set2) (iset-xor set1 set2))
 
