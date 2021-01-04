@@ -162,16 +162,6 @@
                    (lambda (x update _) (update 3 #t))))
     (lambda (set _) (iset=? (iset 2 3 4) set))))
 
-  ;; iset-search update with a different new element
-  (test-assert
-   (call-with-values
-    (lambda ()
-      (iset-search (iset 2 3 4)
-                   3
-                   (lambda (insert _) (insert #t))
-                   (lambda (x update _) (update 7 #t))))
-    (lambda (set _) (iset=? (iset 2 7 4) set))))
-
   ;; iset-search remove
   (test-assert
    (call-with-values
@@ -334,8 +324,8 @@
               (iset-xor pos-set neg-set))
   (test-equal iset=? (iset) (iset-xor pos-set pos-set))
   (test-equal iset=?
-              (list->iset (append (iota 10 100 3) (iota 10 160 3)))
-              (iset-xor pos-set (list->iset (iota 20 130 3))))
+              (list->iset '(100 103 106))
+              (iset-xor pos-set (list->iset (iota 17 109 3))))
   )
 
 (test-group "Subsets"
