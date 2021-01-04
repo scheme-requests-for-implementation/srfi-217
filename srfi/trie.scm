@@ -200,7 +200,7 @@
                ((leaf? t)
                 (let*-leaf (((q bm*) t))
                   (if (fx=? p q)
-                      (raw-leaf p (fxcombine bm bm*))
+                      (leaf p (fxcombine bm bm*))
                       (trie-join p 0 lf q 0 t))))
                (else         ; branch
                 (let*-branch (((q m l r) t))
