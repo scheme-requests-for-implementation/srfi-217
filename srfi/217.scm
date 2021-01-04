@@ -136,13 +136,10 @@
 
 (define (iset-delete! set n) (iset-delete set n))
 
-;; FIXME: Not in the pre-SRFI, but should be added.
-;; Implement this in terms of set difference?
 (define (iset-delete-all set ns)
   (assume (iset? set))
   (assume (or (pair? ns) (null? ns)))
-  (raw-iset (trie-remove (lambda (m) (member m ns fx=?))
-                         (iset-trie set))))
+  (iset-difference set (list->iset ns)))
 
 (define (iset-delete-all! set ns)
   (iset-delete-all set ns))
