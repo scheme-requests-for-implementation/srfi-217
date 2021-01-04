@@ -228,9 +228,9 @@
   (assume (iset? set))
   (let ((trie (iset-trie set)))
     (if (and (branch? trie) (positive? (branch-branching-bit trie)))
-	(trie-fold proc (trie-fold proc nil (branch-right trie))
-			(branch-left trie))
-	(trie-fold proc nil trie))))
+        (trie-fold proc (trie-fold proc nil (branch-right trie))
+                        (branch-left trie))
+        (trie-fold proc nil trie))))
 
 (define (iset-filter pred set)
   (assume (procedure? pred))
@@ -283,7 +283,7 @@
      (let lp ((t1 (iset-trie set1)) (t2 (iset-trie set2)) (sets sets))
        (and (trie-proper-subset? t1 t2)
             (or (null? sets)
-		(lp t2 (iset-trie (car sets)) (cdr sets))))))))
+                (lp t2 (iset-trie (car sets)) (cdr sets))))))))
 
 (define iset>?
   (case-lambda
@@ -296,7 +296,7 @@
      (let lp ((t1 (iset-trie set1)) (t2 (iset-trie set2)) (sets sets))
        (and (trie-proper-subset? t2 t1)
             (or (null? sets)
-	        (lp t2 (iset-trie (car sets)) (cdr sets))))))))
+                (lp t2 (iset-trie (car sets)) (cdr sets))))))))
 
 (define iset<=?
   (case-lambda
@@ -309,7 +309,7 @@
      (let lp ((t1 (iset-trie set1)) (t2 (iset-trie set2)) (sets sets))
        (and (memv (trie-subset-compare t1 t2) '(less equal))
             (or (null? sets)
-		(lp t2 (iset-trie (car sets)) (cdr sets))))))))
+                (lp t2 (iset-trie (car sets)) (cdr sets))))))))
 
 (define iset>=?
   (case-lambda
@@ -321,8 +321,8 @@
      (assume (iset? set2))
      (let lp ((t1 (iset-trie set1)) (t2 (iset-trie set2)) (sets sets))
        (and (memv (trie-subset-compare t1 t2) '(greater equal))
-	    (or (null? sets)
-		(lp t2 (iset-trie (car sets)) (cdr sets))))))))
+            (or (null? sets)
+                (lp t2 (iset-trie (car sets)) (cdr sets))))))))
 
 ;;;; Set theory operations
 

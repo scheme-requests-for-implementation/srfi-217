@@ -601,18 +601,18 @@
              ((leaf? t)
               (let*-leaf (((p bm) t))
                 (leaf p (bitmap-split> k inclusive p bm))))
-	     (else
-	      (let*-branch (((p m l r) t))
-		(if (match-prefix? k p m)
-		    (if (zero-bit? k m)
-			(trie-union (split l) r)
-			(split r))
-		    (and (fx>? p k) t))))))))
+             (else
+              (let*-branch (((p m l r) t))
+                (if (match-prefix? k p m)
+                    (if (zero-bit? k m)
+                        (trie-union (split l) r)
+                        (split r))
+                    (and (fx>? p k) t))))))))
     (if (and (branch? trie) (fxnegative? (branch-branching-bit trie)))
-	(if (fxnegative? k)
-	    (trie-union (split (branch-right trie)) (branch-left trie))
-	    (split (branch-left trie)))
-	(split trie))))
+        (if (fxnegative? k)
+            (trie-union (split (branch-right trie)) (branch-left trie))
+            (split (branch-left trie)))
+        (split trie))))
 
 ;; Return a bitmap containing all elements in `bitmap' that are
 ;; greater than/greater than or equal to `k'.
@@ -661,14 +661,14 @@
              ;; everything or nothing is greater than a
              (and (fx>? p a) (subtrie< t b high-inclusive)))))))
     (if (and (branch? trie) (fxnegative? (branch-branching-bit trie)))
-	(cond ((and (fxnegative? a) (fxnegative? b))
-	       (interval (branch-right trie)))
-	      ((and (fxpositive? a) (fxpositive? b))
-	       (interval (branch-left trie)))
-	      ;; (a, 0) U (0, b)
-	      (else (trie-union (subtrie> (branch-right trie) a low-inclusive)
-	                        (subtrie< (branch-left trie) b high-inclusive))))
-	(interval trie))))
+        (cond ((and (fxnegative? a) (fxnegative? b))
+               (interval (branch-right trie)))
+              ((and (fxpositive? a) (fxpositive? b))
+               (interval (branch-left trie)))
+              ;; (a, 0) U (0, b)
+              (else (trie-union (subtrie> (branch-right trie) a low-inclusive)
+                                (subtrie< (branch-left trie) b high-inclusive))))
+        (interval trie))))
 
 ;; Return a bitmap containing the elements of bitmap that are within
 ;; the interval defined by a, b.
