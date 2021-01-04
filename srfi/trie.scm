@@ -414,28 +414,13 @@
                (else #t))))))      ; the prefixes disagree
     (disjoint? trie1 trie2)))
 
-(define (bitmap-delete bitmap prefix key)
-  (fxxor bitmap
-         (fxarithmetic-shift 1 (fx- key prefix))))
-
 (define (trie-delete trie key)
-  (letrec
-   ((update
-     (lambda (t)
-       (cond ((not t) #f)
-             ((leaf? t)
-              (let*-leaf (((p bm) t))
-                (leaf p (bitmap-delete bm p key))))
-             (else (update-branch t)))))
-    (update-branch
-     (lambda (t)
-       (let*-branch (((p m l r) t))
-         (if (match-prefix? key p m)
-             (if (zero-bit? key m)
-                 (smart-branch p m (update l) r)
-                 (smart-branch p m l (update r)))
-             t)))))  ; key doesn't occur in t
-    (update trie)))
+  (let-values (((trie* _)
+                (trie-search trie
+                             key
+                             (lambda (_ins ignore) (ignore #t))
+                             (lambda (_k _up remove) (remove #t)))))
+    trie*))
 
 ;; Construct a trie which forms the intersection of the two tries.
 ;; Runs in O(n+m) time.
@@ -727,3 +712,7 @@
            (lambda (obj)         ; insert
              (values (trie-join kp 0 (raw-leaf kp kb) p 0 lf) obj))
            (lambda (obj) (values lf obj)))))))   ; ignore
+
+(define (bitmap-delete bitmap prefix key)
+  (fxxor bitmap
+         (fxarithmetic-shift 1 (fx- key prefix))))
