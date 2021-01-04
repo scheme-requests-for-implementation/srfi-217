@@ -213,7 +213,7 @@
 
 (define (copy-trie trie)
   (cond ((not trie) #f)
-        ((leaf? trie) trie)
+        ((leaf? trie) (raw-leaf (leaf-prefix trie) (leaf-bitmap trie)))
         (else
          (branch (branch-prefix trie)
                  (branch-branching-bit trie)
