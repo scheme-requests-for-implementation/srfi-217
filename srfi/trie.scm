@@ -92,12 +92,12 @@
       (highest-bit-mask (fxxor p1 p2) (fxmax 1 (fx* 2 (fxmax m1 m2))))))
 
 ;; Two's-complement trick.
-(define (lowest-set-bit b)
+(define (lowest-bit-mask b)
   (fxand b (fxneg b)))
 
 (define (highest-bit-mask k guess-m)
   (let lp ((x (fxand k (fxnot (fx- guess-m 1)))))
-    (let ((m (lowest-set-bit x)))
+    (let ((m (lowest-bit-mask x)))
       (if (fx=? x m)
           m
           (lp (fx- x m))))))
@@ -248,7 +248,7 @@
   (let loop ((bm bitmap) (acc nil))
     (if (fxzero? bm)
         acc
-        (let* ((mask (lowest-set-bit bm))
+        (let* ((mask (lowest-bit-mask bm))
                (bi (fxfirst-set-bit mask)))
           (loop (fxxor bm mask) (proc (fx+ prefix bi) acc))))))
 
