@@ -37,5 +37,8 @@
           (srfi 143)
           (srfi 145))
 
+  ;; R7RS shim
+  (define exact inexact->exact)
+
   (include "trie.scm")
   (include "217.scm"))
