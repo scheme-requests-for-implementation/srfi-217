@@ -48,12 +48,19 @@
          (let*-leaf binds . body))))))
 
 (define-record-type <branch>
-  (branch prefix branching-bit left right)
+  (raw-branch prefix branching-bit left right)
   branch?
   (prefix branch-prefix)
   (branching-bit branch-branching-bit)
   (left branch-left)
   (right branch-right))
+
+;; The primary branch constructor creates a branch only if the subtrees
+;; are non-empty.
+(define (branch prefix mask trie1 trie2)
+  (cond ((not trie1) trie2)
+        ((not trie2) trie1)
+        (else (raw-branch prefix mask trie1 trie2))))
 
 ;; Shorthand for extracting branch elements.
 (define-syntax let*-branch
@@ -122,8 +129,8 @@
 (define (trie-join prefix1 mask1 trie1 prefix2 mask2 trie2)
   (let ((m (branching-bit prefix1 mask1 prefix2 mask2)))
     (if (zero-bit? prefix1 m)
-        (branch (mask prefix1 m) m trie1 trie2)
-        (branch (mask prefix1 m) m trie2 trie1))))
+        (raw-branch (mask prefix1 m) m trie1 trie2)
+        (raw-branch (mask prefix1 m) m trie2 trie1))))
 
 (define (trie-contains? trie key)
   (and trie
@@ -160,26 +167,20 @@
                       ((q n t1 t2) t))
           (cond ((and (fx=? m n) (fx=? p q))
                  ;; the prefixes match, so merge the subtries
-                 (smart-branch p m (merge s1 t1) (merge s2 t2)))
+                 (branch p m (merge s1 t1) (merge s2 t2)))
                 ((and (branching-bit-higher? m n) (match-prefix? q p m))
                  ;; p is a prefix of q, so merge t with a subtrie of s.
                  (if (zero-bit? q m)
-                     (smart-branch p m (merge s1 t) s2)
-                     (smart-branch p m s1 (merge s2 t))))
+                     (branch p m (merge s1 t) s2)
+                     (branch p m s1 (merge s2 t))))
                 ((and (branching-bit-higher? n m) (match-prefix? p q n))
                  ;; q is a prefix of p, so merge s with a subtrie of t.
                  (if (zero-bit? p n)
-                     (smart-branch q n (merge s t1) t2)
-                     (smart-branch q n t1 (merge s t2))))
+                     (branch q n (merge s t1) t2)
+                     (branch q n t1 (merge s t2))))
                 (else    ; the prefixes disagree
                  (trie-join p m s q n t)))))))
     (merge trie1 trie2)))
-
-;; Construct a branch only if the subtrees are non-empty.
-(define (smart-branch prefix mask trie1 trie2)
-  (cond ((not trie1) trie2)
-        ((not trie2) trie1)
-        (else (branch prefix mask trie1 trie2))))
 
 (define (trie-union trie1 trie2)
   (trie-merge (lambda (s t) (%insert-leaf/proc fxior s t))
@@ -208,8 +209,8 @@
                 (let*-branch (((q m l r) t))
                   (if (match-prefix? p q m)
                       (if (zero-bit? p m)
-                          (branch q m (ins l) r)
-                          (branch q m l (ins r)))
+                          (raw-branch q m (ins l) r)
+                          (raw-branch q m l (ins r)))
                       (trie-join p 0 lf q 0 t))))))))
       (ins trie))))
 
@@ -217,10 +218,10 @@
   (cond ((not trie) #f)
         ((leaf? trie) (raw-leaf (leaf-prefix trie) (leaf-bitmap trie)))
         (else
-         (branch (branch-prefix trie)
-                 (branch-branching-bit trie)
-                 (copy-trie (branch-left trie))
-                 (copy-trie (branch-right trie))))))
+         (raw-branch (branch-prefix trie)
+                     (branch-branching-bit trie)
+                     (copy-trie (branch-left trie))
+                     (copy-trie (branch-right trie))))))
 
 (define (trie-size trie)
   (let accum ((siz 0) (t trie))
@@ -275,8 +276,7 @@
                            ((m) (branch-branching-bit t))
                            ((il ol) (part (branch-left t)))
                            ((ir or) (part (branch-right t))))
-                (values (smart-branch p m il ir)
-                        (smart-branch p m ol or))))))))
+                (values (branch p m il ir) (branch p m ol or))))))))
     (part trie)))
 
 (define (bitmap-filter pred prefix bitmap)
@@ -292,10 +292,10 @@
          (let*-leaf (((p bm) trie))
            (leaf p (bitmap-filter pred p bm))))
         (else
-         (smart-branch (branch-prefix trie)
-                       (branch-branching-bit trie)
-                       (trie-filter pred (branch-left trie))
-                       (trie-filter pred (branch-right trie))))))
+         (branch (branch-prefix trie)
+                 (branch-branching-bit trie)
+                 (trie-filter pred (branch-left trie))
+                 (trie-filter pred (branch-right trie))))))
 
 (define (trie-remove pred trie)
   (cond ((not trie) #f)
@@ -306,10 +306,10 @@
                                 p
                                 bm))))
         (else
-         (smart-branch (branch-prefix trie)
-                       (branch-branching-bit trie)
-                       (trie-remove pred (branch-left trie))
-                       (trie-remove pred (branch-right trie))))))
+         (branch (branch-prefix trie)
+                 (branch-branching-bit trie)
+                 (trie-remove pred (branch-left trie))
+                 (trie-remove pred (branch-right trie))))))
 
 (define (%trie-find-least trie)
   (and trie
@@ -476,7 +476,7 @@
                          (intersect s tl)
                          (intersect s tr))))
                ((fx=? p q)
-                (smart-branch p m (intersect sl tl) (intersect sr tr)))
+                (branch p m (intersect sl tl) (intersect sr tr)))
                (else #f))))))
     (intersect trie1 trie2)))
 
@@ -511,11 +511,11 @@
      (lambda (s t)
        (let*-branch (((p m sl sr) s) ((q n tl tr) t))
          (cond ((and (fx=? m n) (fx=? p q))
-                (smart-branch p m (difference sl tl) (difference sr tr)))
+                (branch p m (difference sl tl) (difference sr tr)))
                ((and (branching-bit-higher? m n) (match-prefix? q p m))
                 (if (zero-bit? q m)
-                    (smart-branch p m (difference sl t) sr)
-                    (smart-branch p m sl (difference sr t))))
+                    (branch p m (difference sl t) sr)
+                    (branch p m sl (difference sr t))))
                ((and (branching-bit-higher? n m) (match-prefix? p q n))
                 (if (zero-bit? p n)
                     (difference s tl)
@@ -534,8 +534,8 @@
          (let*-branch (((p m l r) trie))
            (if (match-prefix? prefix p m)
                (if (zero-bit? prefix m)
-                   (smart-branch p m (%trie-delete-bitmap l prefix bitmap) r)
-                   (smart-branch p m l (%trie-delete-bitmap r prefix bitmap)))
+                   (branch p m (%trie-delete-bitmap l prefix bitmap) r)
+                   (branch p m l (%trie-delete-bitmap r prefix bitmap)))
                trie)))))
 
 ;; Return a trie containing all the elements of `trie' which are
@@ -698,9 +698,9 @@
          (if (match-prefix? key p m)
              (if (zero-bit? key m)
                  (let-values (((l* obj) (search l)))
-                   (values (smart-branch p m l* r) obj))
+                   (values (branch p m l* r) obj))
                  (let-values (((r* obj) (search r)))
-                   (values (smart-branch p m l r*) obj)))
+                   (values (branch p m l r*) obj)))
              (failure
               (lambda (obj)      ; insert
                 (let* ((kp (iprefix key)) (lf (raw-leaf kp (ibitmap key))))
