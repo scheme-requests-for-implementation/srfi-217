@@ -104,7 +104,7 @@
 
 ;; FIXME: To improve.
 (define (highest-set-bit k)
-  (fx- (fxlength (highest-bit-mask k 1)) 1))
+  (fxfirst-set-bit (highest-bit-mask k 1)))
 
 (define (zero-bit? k m)
   (fxzero? (fxand k m)))
