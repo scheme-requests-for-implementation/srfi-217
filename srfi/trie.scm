@@ -681,53 +681,45 @@
 ;; Search trie for key, and construct a new trie using the results of
 ;; failure and success.
 (define (trie-search trie key failure success)
-  (letrec
-   ((search
-     (lambda (t)
-       (cond ((not t)
-              (failure (lambda (obj)          ; insert
-                         (values (raw-leaf (iprefix key) (ibitmap key))
-                                 obj))
-                       (lambda (obj)          ; ignore
-                         (values #f obj))))
-             ((leaf? t) (leaf-search t key failure success))
-             (else (branch-search t)))))
-    (branch-search
-     (lambda (t)
-       (let*-branch (((p m l r) t))
-         (if (match-prefix? key p m)
-             (if (zero-bit? key m)
-                 (let-values (((l* obj) (search l)))
-                   (values (branch p m l* r) obj))
-                 (let-values (((r* obj) (search r)))
-                   (values (branch p m l r*) obj)))
-             (failure
-              (lambda (obj)      ; insert
-                (let* ((kp (iprefix key)) (lf (raw-leaf kp (ibitmap key))))
-                  (values (trie-join kp 0 lf p m t) obj)))
-              (lambda (obj) (values t obj))))))))  ; ignore
-    (search trie)))
+  (let* ((kp (iprefix key))
+         (key-leaf (raw-leaf kp (ibitmap key))))
+    (let lp ((t trie) (build values))
+      (cond ((not t)
+             (failure (lambda (obj) (build key-leaf obj))
+                      (lambda (obj) (build #f obj))))
+            ((leaf? t)
+             (%leaf-search t key failure success build))
+            (else
+             (let*-branch (((p m l r) t))
+               (if (match-prefix? key p m)
+                   (if (zero-bit? key m)
+                       (lp l (lambda (l* obj)
+                               (build (branch p m l* r) obj)))
+                       (lp r (lambda (r* obj)
+                               (build (branch p m l r*) obj))))
+                   (failure (lambda (obj)
+                              (build (trie-join kp 0 key-leaf p m t)
+                                     obj))
+                            (lambda (obj) (build t obj))))))))))
 
-(define (leaf-search lf key failure success)
+(define (%leaf-search lf key failure success build)
   (let ((kp (iprefix key)) (kb (ibitmap key)))
     (let*-leaf (((p bm) lf))
       (if (fx=? kp p)
           (if (fxzero? (fxand kb bm))
-              (failure
-               (lambda (obj)     ; insert
-                 (values (raw-leaf p (fxior bm kb)) obj))
-               (lambda (obj) (values lf obj)))  ; ignore
-              (success
-               key
-               (lambda (elt obj)        ; update
-                 (assume (eqv? elt key) "invalid new element")
-                 (values lf obj))
-               (lambda (obj)     ; remove
-                 (values (leaf p (bitmap-delete bm p key)) obj))))
-          (failure
-           (lambda (obj)         ; insert
-             (values (trie-join kp 0 (raw-leaf kp kb) p 0 lf) obj))
-           (lambda (obj) (values lf obj)))))))   ; ignore
+              (failure (lambda (obj)
+                         (build (raw-leaf p (fxior kb bm)) obj))
+                       (lambda (obj) (build lf obj)))
+              (success key
+                       (lambda (elt obj)
+                         (assume (eqv? key elt) "invalid new element")
+                         (build lf obj))
+                       (lambda (obj)
+                         (build (leaf p (bitmap-delete bm p key)) obj))))
+          (failure (lambda (obj)
+                     (build (trie-join kp 0 (raw-leaf kp kb) p 0 lf)
+                            obj))
+                   (lambda (obj) (build lf obj)))))))
 
 (define (bitmap-delete bitmap prefix key)
   (fxxor bitmap
