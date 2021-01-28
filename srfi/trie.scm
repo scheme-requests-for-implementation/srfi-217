@@ -297,20 +297,6 @@
                  (trie-filter pred (branch-left trie))
                  (trie-filter pred (branch-right trie))))))
 
-(define (trie-remove pred trie)
-  (cond ((not trie) #f)
-        ((leaf? trie)
-         (let*-leaf (((p bm) trie))
-           (leaf p
-                 (bitmap-filter (lambda (x) (not (pred x)))
-                                p
-                                bm))))
-        (else
-         (branch (branch-prefix trie)
-                 (branch-branching-bit trie)
-                 (trie-remove pred (branch-left trie))
-                 (trie-remove pred (branch-right trie))))))
-
 (define (%trie-find-least trie)
   (and trie
        (if (leaf? trie)
