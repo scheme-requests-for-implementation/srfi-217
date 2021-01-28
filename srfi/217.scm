@@ -129,10 +129,14 @@
 (define (iset-adjoin! set . ns)
   (apply iset-adjoin set ns))
 
-(define (iset-delete set n)
-  (assume (iset? set))
-  (assume (valid-integer? n))
-  (raw-iset (trie-delete (iset-trie set) n)))
+(define iset-delete
+  (case-lambda
+    ((set) (iset-copy set))
+    ((set n)
+     (assume (iset? set))
+     (assume (valid-integer? n))
+     (raw-iset (trie-delete (iset-trie set) n)))
+    ((set . ns) (iset-delete-all set ns))))
 
 (define (iset-delete! set n) (iset-delete set n))
 
