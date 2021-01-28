@@ -115,16 +115,20 @@
 
 ;;;; Updaters
 
-(define (iset-adjoin set . ns)
-  (assume (iset? set))
-  (if (null? ns)
-      (iset-copy set)
-      (raw-iset
-       (fold (lambda (n t)
-               (assume (valid-integer? n))
-               (trie-insert t n))
-             (iset-trie set)
-             ns))))
+(define iset-adjoin
+  (case-lambda
+    ((set) (iset-copy set))
+    ((set n)
+     (assume (iset? set))
+     (assume (valid-integer? n))
+     (raw-iset (trie-insert (iset-trie set) n)))
+    ((set . ns)
+     (raw-iset
+      (fold (lambda (n t)
+              (assume (valid-integer? n))
+              (trie-insert t n))
+            (iset-trie set)
+            ns)))))
 
 (define (iset-adjoin! set . ns)
   (apply iset-adjoin set ns))
