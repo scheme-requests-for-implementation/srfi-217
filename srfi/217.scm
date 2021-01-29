@@ -141,7 +141,6 @@
 
 (define iset-adjoin
   (case-lambda
-    ((set) (iset-copy set))
     ((set n)
      (assume (iset? set))
      (assume (valid-integer? n))
@@ -159,7 +158,6 @@
 
 (define iset-delete
   (case-lambda
-    ((set) (iset-copy set))
     ((set n)
      (assume (iset? set))
      (assume (valid-integer? n))
@@ -330,76 +328,53 @@
          (or (null? sets)
              (every iset-eq1 sets)))))
 
-(define iset<?
-  (case-lambda
-    ((set)
-     (assume (iset? set))
-     #t)
-    ((set1 set2 . sets)
-     (assume (iset? set1))
-     (assume (iset? set2))
-     (let lp ((t1 (iset-trie set1)) (t2 (iset-trie set2)) (sets sets))
-       (and (trie-proper-subset? t1 t2)
-            (or (null? sets)
-                (lp t2 (iset-trie (car sets)) (cdr sets))))))))
+(define (iset<? set1 set2 . sets)
+  (assume (iset? set1))
+  (assume (iset? set2))
+  (let lp ((t1 (iset-trie set1)) (t2 (iset-trie set2)) (sets sets))
+    (and (trie-proper-subset? t1 t2)
+         (or (null? sets)
+             (lp t2 (iset-trie (car sets)) (cdr sets))))))
 
-(define iset>?
-  (case-lambda
-    ((set)
-     (assume (iset? set))
-     #t)
-    ((set1 set2 . sets)
-     (assume (iset? set1))
-     (assume (iset? set2))
-     (let lp ((t1 (iset-trie set1)) (t2 (iset-trie set2)) (sets sets))
-       (and (trie-proper-subset? t2 t1)
-            (or (null? sets)
-                (lp t2 (iset-trie (car sets)) (cdr sets))))))))
+(define (iset>? set1 set2 . sets)
+  (assume (iset? set1))
+  (assume (iset? set2))
+  (let lp ((t1 (iset-trie set1)) (t2 (iset-trie set2)) (sets sets))
+    (and (trie-proper-subset? t2 t1)
+         (or (null? sets)
+             (lp t2 (iset-trie (car sets)) (cdr sets))))))
 
-(define iset<=?
-  (case-lambda
-    ((set)
-     (assume (iset? set))
-     #t)
-    ((set1 set2 . sets)
-     (assume (iset? set1))
-     (assume (iset? set2))
-     (let lp ((t1 (iset-trie set1)) (t2 (iset-trie set2)) (sets sets))
-       (and (memv (trie-subset-compare t1 t2) '(less equal))
-            (or (null? sets)
-                (lp t2 (iset-trie (car sets)) (cdr sets))))))))
+(define (iset<=? set1 set2 . sets)
+  (assume (iset? set1))
+  (assume (iset? set2))
+  (let lp ((t1 (iset-trie set1)) (t2 (iset-trie set2)) (sets sets))
+    (and (memv (trie-subset-compare t1 t2) '(less equal))
+         (or (null? sets)
+             (lp t2 (iset-trie (car sets)) (cdr sets))))))
 
-(define iset>=?
-  (case-lambda
-    ((set)
-     (assume (iset? set))
-     #t)
-    ((set1 set2 . sets)
+(define (iset>=? set1 set2 . sets)
      (assume (iset? set1))
      (assume (iset? set2))
      (let lp ((t1 (iset-trie set1)) (t2 (iset-trie set2)) (sets sets))
        (and (memv (trie-subset-compare t1 t2) '(greater equal))
             (or (null? sets)
-                (lp t2 (iset-trie (car sets)) (cdr sets))))))))
+                (lp t2 (iset-trie (car sets)) (cdr sets))))))
 
 ;;;; Set theory operations
 
-(define (iset-union set . rest)
-  (assume (iset? set))
-  (if (null? rest)
-      (iset-copy set)
-      (raw-iset (fold (lambda (s t)
-                        (assume (iset? s))
-                        (trie-union (iset-trie s) t))
-                      (iset-trie set)
-                      rest))))
+;; TODO: Tune two-set path.
+(define (iset-union set . sets)
+  (raw-iset (fold (lambda (s t)
+                    (assume (iset? s))
+                    (trie-union (iset-trie s) t))
+                  (iset-trie set)
+                  sets)))
 
 (define (iset-union! set . rest)
   (apply iset-union set rest))
 
 (define iset-intersection
   (case-lambda
-    ((set) (iset-copy set))
     ((set1 set2)
      (assume (iset? set1))
      (assume (iset? set2))
@@ -417,7 +392,6 @@
 
 (define iset-difference
   (case-lambda
-    ((set) (iset-copy set))
     ((set1 set2)              ; fast path
      (assume (iset? set1))
      (assume (iset? set2))
