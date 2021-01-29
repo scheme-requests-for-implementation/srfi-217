@@ -71,6 +71,16 @@
                            0))
 
   (test-equal iset=?
+              (list->iset (iota 50))
+              (iset-iota 50))
+  (test-equal iset=?
+              (list->iset (iota 50 -25))
+              (iset-iota 50 -25))
+  (test-equal iset=?
+              (list->iset (iota 50 -25 7))
+              (iset-iota 50 -25 7))
+
+  (test-equal iset=?
               (list->iset (iota 20 -10))
               (make-range-iset -10 10))
   (test-equal iset=?
