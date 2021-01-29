@@ -418,7 +418,7 @@
 
 ;;;; Subsets
 
-(define (iset-range= set k)
+(define (isubset= set k)
   (if (iset-contains? set k) (iset k) (iset)))
 
 (define (iset-open-interval set low high)
@@ -445,22 +445,22 @@
   (assume (fx>=? high low))
   (raw-iset (subtrie-interval (iset-trie set) low high #t #f)))
 
-(define (iset-range< set k)
+(define (isubset< set k)
   (assume (iset? set))
   (assume (valid-integer? k))
   (raw-iset (subtrie< (iset-trie set) k #f)))
 
-(define (iset-range<= set k)
+(define (isubset<= set k)
   (assume (iset? set))
   (assume (valid-integer? k))
   (raw-iset (subtrie< (iset-trie set) k #t)))
 
-(define (iset-range> set k)
+(define (isubset> set k)
   (assume (iset? set))
   (assume (valid-integer? k))
   (raw-iset (subtrie> (iset-trie set) k #f)))
 
-(define (iset-range>= set k)
+(define (isubset>= set k)
   (assume (iset? set))
   (assume (valid-integer? k))
   (raw-iset (subtrie> (iset-trie set) k #t)))

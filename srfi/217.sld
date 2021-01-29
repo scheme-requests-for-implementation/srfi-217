@@ -43,8 +43,8 @@
           iset-difference iset-difference!
           iset-xor iset-xor!
           iset-open-interval iset-closed-interval iset-open-closed-interval
-          iset-closed-open-interval iset-range= iset-range< iset-range<=
-          iset-range> iset-range>=
+          iset-closed-open-interval isubset= isubset< isubset<=
+          isubset> isubset>=
           ;; debug
           iset-trie
           highest-set-bit
