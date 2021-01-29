@@ -84,16 +84,16 @@ and may be provided in a future SRFI.</p>
 <p>It is an error to rely upon these procedures working by side effect. For example, this is not guaranteed to work:</p>
 
 <pre>
-        (let* ((iset1 (iset 'a 'b 'c))      ; iset1 = {a,b,c}.
-               (iset2 (iset-adjoin! iset1 'd)))   ; Add d to {a,b,c}.
-          iset1) ; Could be either {a,b,c} or {a,b,c,d}.
+        (let* ((iset1 (iset 1 2 3))      ; iset1 = {1,2,3}.
+               (iset2 (iset-adjoin! iset1 4)))   ; Add 4 to {1,2,3}.
+          iset1) ; Could be either {1,2,3} or {1,2,3,4}.
 </pre>
 
 <p>However, this is well-defined:</p>
 
 <pre>
-        (let ((iset1 (iset 'a 'b 'c)))
-          (iset-adjoin! iset1 'd)) ; Add d to {a,b,c}.
+        (let ((iset1 (iset 1 2 3)))
+          (iset-adjoin! iset1 4)) ; Add 4 to {1,2,3}.
 </pre>
   
 <p>So clients of these procedures write in a functional style, but must additionally be sure that, when the procedure is called, there are no other live pointers to the potentially-modified iset (hence the term "linear update").</p>
