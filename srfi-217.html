@@ -205,20 +205,20 @@ Returns the smallest or largest integer in <em>iset</em>, or <code>#f</code> if 
 
 <h3 id="Updaters">Updaters</h3>
 
-<p><code>(iset-adjoin </code><em>iset element</em> ...<code>)</code></p>
+<p><code>(iset-adjoin </code><em>iset element<sub>1</sub> element<sub>2</sub></em> ...<code>)</code></p>
 
 <p>The <code>iset-adjoin</code> procedure returns a newly allocated iset that contains all the values of <em>iset</em>, and in addition each <em>element</em> unless it is already equal to one of the existing or newly added members.</p>
 
 <pre class="example"><code>(iset-&gt;list (iset-adjoin (iset 1 3 5) 0)) ⇒ (0 1 3 5)
 </code></pre>
 
-<p><code>(iset-adjoin! </code><em>iset element</em> ...<code>)</code></p>
+<p><code>(iset-adjoin! </code><em>iset element<sub>1</sub> element<sub>2</sub></em> ...<code>)</code></p>
 
 <p>The <code>iset-adjoin!</code> procedure is the same as <code>iset-adjoin</code>, except that it is permitted to mutate and return the <em>iset</em> argument rather than allocating a new iset.</p>
 
-<p><code>(iset-delete </code><em>iset element</em> ...<code>)</code></p>
+<p><code>(iset-delete </code><em>iset element<sub>1</sub> element<sub>2</sub></em> ...<code>)</code></p>
 
-<p><code>(iset-delete! </code><em>iset element</em> ...<code>)</code></p>
+<p><code>(iset-delete! </code><em>iset element<sub>1</sub> element<sub>2</sub></em> ...<code>)</code></p>
 
 <p><code>(iset-delete-all </code><em>iset element-list</em><code>)</code></p>
 
