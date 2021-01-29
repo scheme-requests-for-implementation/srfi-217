@@ -164,17 +164,17 @@ This constructor produces an iset containing the sequence</p>
 <p><em>start</em><code>, (+</code> <em>start</em> <em>step</em><code>), (+</code> <em>start</em> <code>(* 2</code> <em>step</em><code>)), &hellip;, (+</code> <em>start</em> <code>(* (-</code> <em>size</em> <code>1)</code> <em>step</em><code>))</code></p>
 </blockquote>
 
-<p><code>(make-range-iset</code> <em>low</em> <em>high</em> <code>[</code><em>step</em><code>])</code></p>
+<p><code>(make-range-iset</code> <em>start</em> <em>end</em> <code>[</code><em>step</em><code>])</code></p>
 
 <p>Returns a newly allocated iset specified by an inclusive lower bound
-<em>low</em>, an exclusive upper bound <em>high</em>, and a <em>step</em> value (default 1),
+<em>start</em>, an exclusive upper bound <em>end</em>, and a <em>step</em> value (default 1),
 all of which are exact integers. This constructor produces an iset
 containing the sequence</p>
 
-<blockquote><p><em>low</em><code>, (+</code> <em>low</em> <em>step</em><code>), (+</code> <em>low</em> <code>(* 2</code> <em>step</em><code>)), &hellip;, (+</code> <em>low</em> <code>(*</code> <em>n</em> <em>step</em><code>))</code>,</p></blockquote>
+<blockquote><p><em>start</em><code>, (+</code> <em>start</em> <em>step</em><code>), (+</code> <em>start</em> <code>(* 2</code> <em>step</em><code>)), &hellip;, (+</code> <em>start</em> <code>(*</code> <em>n</em> <em>step</em><code>))</code>,</p></blockquote>
 
-<p>where <em>n</em> is the greatest integer such that <code>(+</code> <em>low</em> <code>(*</code> <em>n</em> <em>step</em><code>))</code>
-<code>&lt;</code> <em>end</em> if <em>step</em> is positive, or such that <code>(+</code> <em>low</em> <code>(*</code> <em>n</em> <em>step</em><code>))</code>
+<p>where <em>n</em> is the greatest integer such that <code>(+</code> <em>start</em> <code>(*</code> <em>n</em> <em>step</em><code>))</code>
+<code>&lt;</code> <em>end</em> if <em>step</em> is positive, or such that <code>(+</code> <em>start</em> <code>(*</code> <em>n</em> <em>step</em><code>))</code>
 <code>&gt;</code> <em>end</em> if <em>step</em> is negative. It is an error if <em>step</em> is zero.</p>
 
 <h3 id="Predicates">Predicates</h3>
