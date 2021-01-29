@@ -464,7 +464,7 @@
              ((leaf? t)
               (let*-leaf (((p bm) t))
                 (values (+ p (fxfirst-set-bit bm))
-                        (raw-leaf p (bitmap-delete-min bm)))))
+                        (leaf p (bitmap-delete-min bm)))))
              (else
               (let*-branch (((p m l r) t))
                 (let-values (((n l*) (update/min l)))
@@ -479,10 +479,10 @@
              ((leaf? t)
               (let*-leaf (((p bm) t))
                 (values (+ p (highest-set-bit bm))
-                        (raw-leaf p (bitmap-delete-max bm)))))
+                        (leaf p (bitmap-delete-max bm)))))
              (else
               (let*-branch (((p m l r) t))
-                (let-values (((n r*) (update/max t)))
+                (let-values (((n r*) (update/max r)))
                   (values n (branch p m l r*)))))))))
     (update/max trie)))
 
