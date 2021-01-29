@@ -137,12 +137,9 @@
   (case-lambda
     ((set) (iset-copy set))
     ((set n)
-     (let-values (((set* _)
-                   (iset-search set
-                                n
-                                (lambda (_ins ig) (ig #t))
-                                (lambda (_n ins rem) (rem #t)))))
-       set*))
+     (assume (iset? set))
+     (assume (valid-integer? n))
+     (raw-iset (trie-delete (iset-trie set) n)))
     ((set . ns) (iset-delete-all set ns))))
 
 (define (iset-delete! set n) (iset-delete set n))

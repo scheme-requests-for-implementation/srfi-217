@@ -430,6 +430,14 @@
                (else #t))))))      ; the prefixes disagree
     (disjoint? trie1 trie2)))
 
+(define (trie-delete trie key)
+  (let-values (((trie* _)
+                (trie-search trie
+                             key
+                             (lambda (_ins ignore) (ignore #t))
+                             (lambda (_k _up remove) (remove #t)))))
+    trie*))
+
 ;; Construct a trie which forms the intersection of the two tries.
 ;; Runs in O(n+m) time.
 (define (trie-intersection trie1 trie2)
