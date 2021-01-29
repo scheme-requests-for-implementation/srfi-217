@@ -727,12 +727,11 @@
                          (assume (eqv? key elt) "invalid new element")
                          (build lf obj))
                        (lambda (obj)
-                         (build (leaf p (bitmap-delete bm p key)) obj))))
+                         (build (leaf p (bitmap-delete bm key)) obj))))
           (failure (lambda (obj)
                      (build (trie-join kp 0 (raw-leaf kp kb) p 0 lf)
                             obj))
                    (lambda (obj) (build lf obj)))))))
 
-(define (bitmap-delete bitmap prefix key)
-  (fxxor bitmap
-         (fxarithmetic-shift 1 (fx- key prefix))))
+(define (bitmap-delete bitmap key)
+  (fxand bitmap (fxnot (ibitmap key))))
