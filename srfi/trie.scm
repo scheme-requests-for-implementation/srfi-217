@@ -431,12 +431,24 @@
     (disjoint? trie1 trie2)))
 
 (define (trie-delete trie key)
-  (let-values (((trie* _)
-                (trie-search trie
-                             key
-                             (lambda (_ins ignore) (ignore #t))
-                             (lambda (_k _up remove) (remove #t)))))
-    trie*))
+  (letrec*
+   ((prefix (iprefix key))
+    (update
+     (lambda (t)
+       (cond ((not t) #f)
+             ((leaf? t)
+              (let*-leaf (((p bm) t))
+                (if (fx=? p prefix)
+                    (leaf p (bitmap-delete bm key))
+                    t)))
+             (else
+              (let*-branch (((p m l r) t))
+                (if (match-prefix? prefix p m)
+                    (if (zero-bit? prefix m)
+                        (branch p m (update l) r)
+                        (branch p m l (update r)))
+                    t)))))))
+    (update trie)))
 
 ;; Construct a trie which forms the intersection of the two tries.
 ;; Runs in O(n+m) time.
