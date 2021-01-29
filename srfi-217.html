@@ -129,7 +129,7 @@ results may differ from that shown here.</p>
 </li><li><p><a href="#Subsets">Subsets</a>: <code>iset=?</code>, <code>iset&lt;?</code>, <code>iset&gt;?</code>, <code>iset&lt;=?</code>, <code>iset&gt;=?</code></p>
 </li><li><p><a href="#Settheoryoperations">Set theory operations</a>: <code>iset-union</code>, <code>iset-intersection</code>, <code>iset-difference</code>, <code>iset-xor</code>, <code>iset-union!</code>, <code>iset-intersection!</code>, <code>iset-difference!</code>, <code>iset-xor!</code></p>
 </li><li><p><a href="#Intervalsandranges">Intervals and ranges</a>:
-<code>iset-open-interval</code>, <code>iset-closed-interval</code>, <code>iset-open-closed-interval</code>, <code>iset-closed-open-interval</code>, <code>iset-range=?</code>, <code>iset-range&lt;?</code>, <code>iset-range&lt;=?</code>, <code>iset-range&gt;?</code>, <code>iset-range&gt;=?</code>
+<code>iset-open-interval</code>, <code>iset-closed-interval</code>, <code>iset-open-closed-interval</code>, <code>iset-closed-open-interval</code>, <code>isubset=?</code>, <code>isubset&lt;?</code>, <code>isubset&lt;=?</code>, <code>isubset&gt;?</code>, <code>isubset&gt;=?</code>
 </li>
 
 </ul>
@@ -483,20 +483,20 @@ closed below.</p>
 (iset-&gt;list (iset-closed-open-interval (iset 2 3 5 7 11) 2 7)) ⇒ (2 3 5)
 </code></pre>
 
-<p><code>(iset-range= </code><em>iset k</em><code>)</code>
-</p><p><code>(iset-range&lt; </code><em>iset k</em><code>)</code>
-</p><p><code>(iset-range&lt;= </code><em>iset k</em><code>)</code>
-</p><p><code>(iset-range> </code><em>iset k</em><code>)</code>
-</p><p><code>(iset-range>= </code><em>iset k</em><code>)</code>
+<p><code>(isubset= </code><em>iset k</em><code>)</code>
+</p><p><code>(isubset&lt; </code><em>iset k</em><code>)</code>
+</p><p><code>(isubset&lt;= </code><em>iset k</em><code>)</code>
+</p><p><code>(isubset&gt; </code><em>iset k</em><code>)</code>
+</p><p><code>(isubset&gt;= </code><em>iset k</em><code>)</code>
 <p>
 
 Procedures that return an integer set containing the elements of <em>iset</em> that are equal
 to, less than, less than or equal to, greater than, or greater than or equal to <em>k</em>.
-Note that the result <code>iset-range=</code> contains at most one element.</p>
+Note that the result <code>isubset=</code> contains at most one element.</p>
 
-<pre class="example"><code>(iset-&gt;list (iset-range= (iset 2 3 5 7 11) 7)) ⇒ (7)
-(iset-&gt;list (iset-range&lt; (iset 2 3 5 7 11) 7)) ⇒ (2 3 5)
-(iset-&gt;list (iset-range&gt;= (iset 2 3 5 7 11) 7)) ⇒ (7 11)
+<pre class="example"><code>(iset-&gt;list (isubset= (iset 2 3 5 7 11) 7)) ⇒ (7)
+(iset-&gt;list (isubset&lt; (iset 2 3 5 7 11) 7)) ⇒ (2 3 5)
+(iset-&gt;list (isubset&gt;= (iset 2 3 5 7 11) 7)) ⇒ (7 11)
 </code></pre>
 
 <h2>Implementation</h2>
