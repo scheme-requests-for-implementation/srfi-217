@@ -118,6 +118,12 @@
 (define (ibitmap k)
   (fxarithmetic-shift 1 (isuffix k)))
 
+(define (bitmap-delete-min b)
+  (fxand b (fxnot (lowest-bit-mask b))))
+
+(define (bitmap-delete-max b)
+  (fxand b (fxnot (highest-bit-mask b (lowest-bit-mask b)))))
+
 (define (trie-insert-parts trie prefix bitmap)
   (letrec
    ((ins
@@ -449,6 +455,36 @@
                         (branch p m l (update r)))
                     t)))))))
     (update trie)))
+
+(define (trie-delete-min trie)
+  (letrec
+   ((update/min
+     (lambda (t)
+       (cond ((not t) (values #f #f))
+             ((leaf? t)
+              (let*-leaf (((p bm) t))
+                (values (+ p (fxfirst-set-bit bm))
+                        (raw-leaf p (bitmap-delete-min bm)))))
+             (else
+              (let*-branch (((p m l r) t))
+                (let-values (((n l*) (update/min l)))
+                  (values n (branch p m l* r)))))))))
+    (update/min trie)))
+
+(define (trie-delete-max trie)
+  (letrec
+   ((update/max
+     (lambda (t)
+       (cond ((not t) (values #f #f))
+             ((leaf? t)
+              (let*-leaf (((p bm) t))
+                (values (+ p (highest-set-bit bm))
+                        (raw-leaf p (bitmap-delete-max bm)))))
+             (else
+              (let*-branch (((p m l r) t))
+                (let-values (((n r*) (update/max t)))
+                  (values n (branch p m l r*)))))))))
+    (update/max trie)))
 
 ;; Construct a trie which forms the intersection of the two tries.
 ;; Runs in O(n+m) time.
