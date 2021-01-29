@@ -57,7 +57,7 @@ provides a number of procedures which have no direct equivalents in
 SRFI 113.  These include:
 
 <ul>
-  <li><p><code>make-iset-range</code>, which creates an iset given
+  <li><p><code>make-range-iset</code>, which creates an iset given
       a range of integers</p></li>
   <li><p><code>iset-min</code> and <code>iset-max</code>, which
       return the largest and smallest members</p></li>
@@ -119,13 +119,13 @@ results may differ from that shown here.</p>
 
 <h3 id="Index">Index</h3>
 
-<ul><li><p><a href="#Constructors">Constructors</a>: <code>iset</code>, <code>iset-unfold</code></p>
+<ul><li><p><a href="#Constructors">Constructors</a>: <code>iset</code>, <code>iset-unfold</code>, <code>iset-iota</code>, <code>make-range-iset</code></p>
 </li><li><p><a href="#Predicates">Predicates</a>: <code>iset?</code>, <code>iset-contains?</code>, <code>iset-empty?</code>, <code>iset-disjoint?</code></p>
 </li><li><p><a href="#Accessors">Accessors</a>: <code>iset-member</code>, <code>iset-min</code>, <code>iset-max</code></p>
 </li><li><p><a href="#Updaters">Updaters</a>: <code>iset-adjoin</code>, <code>iset-adjoin!</code>, <code>iset-delete</code>, <code>iset-delete!</code>, <code>iset-delete-all</code>, <code>iset-delete-all!</code>, <code>iset-search</code>, <code>iset-search!</code></p>
 </li><li><p><a href="#Thewholeiset">The whole iset</a>: <code>iset-size</code>, <code>iset-find</code>, <code>iset-count</code>, <code>iset-any?</code>, <code>iset-every?</code></p>
 </li><li><p><a href="#Mappingandfolding">Mapping and folding</a>: <code>iset-map</code>, <code>iset-for-each</code>, <code>iset-fold</code>, <code>iset-filter</code>, <code>iset-filter!</code>, <code>iset-remove</code>, <code>iset-remove!</code>, <code>iset-partition</code>, <code>iset-partition!</code></p>
-</li><li><p><a href="#Copyingandconversion">Copying and conversion</a>: <code>iset-copy</code>, <code>make-iset-range</code>, <code>iset-&gt;list</code>, <code>list-&gt;iset</code>, <code>list-&gt;iset!</code></p>
+</li><li><p><a href="#Copyingandconversion">Copying and conversion</a>: <code>iset-copy</code>, <code>iset-&gt;list</code>, <code>list-&gt;iset</code>, <code>list-&gt;iset!</code></p>
 </li><li><p><a href="#Subsets">Subsets</a>: <code>iset=?</code>, <code>iset&lt;?</code>, <code>iset&gt;?</code>, <code>iset&lt;=?</code>, <code>iset&gt;=?</code></p>
 </li><li><p><a href="#Settheoryoperations">Set theory operations</a>: <code>iset-union</code>, <code>iset-intersection</code>, <code>iset-difference</code>, <code>iset-xor</code>, <code>iset-union!</code>, <code>iset-intersection!</code>, <code>iset-difference!</code>, <code>iset-xor!</code></p>
 </li><li><p><a href="#Intervalsandranges">Intervals and ranges</a>:
@@ -152,6 +152,30 @@ results may differ from that shown here.</p>
                          2))
  ⇒ (2 4 8 16 32 64)
 </code></pre>
+
+<p><code>(iset-iota</code> <em>size</em> <code>[</code><em>start</em> <code>[</code><em>step</em><code>]])</code></p>
+
+<p>Returns a newly allocated iset specified by a size (a non-negative
+exact integer) as well as an inclusive lower bound <em>start</em> (default 0)
+and a <em>step</em> value (default 1), both of which are exact integers.
+This constructor produces an iset containing the sequence</p>
+
+<blockquote>
+<p><em>start</em><code>, (+</code> <em>start</em> <em>step</em><code>), (+</code> <em>start</em> <code>(* 2</code> <em>step</em><code>)), &hellip;, (+</code> <em>start</em> <code>(* (-</code> <em>size</em> <code>1)</code> <em>step</em><code>))</code></p>
+</blockquote>
+
+<p><code>(make-range-iset</code> <em>low</em> <em>high</em> <code>[</code><em>step</em><code>])</code></p>
+
+<p>Returns a newly allocated iset specified by an inclusive lower bound
+<em>low</em>, an exclusive upper bound <em>high</em>, and a <em>step</em> value (default 1),
+all of which are exact integers. This constructor produces an iset
+containing the sequence</p>
+
+<blockquote><p><em>low</em><code>, (+</code> <em>low</em> <em>step</em><code>), (+</code> <em>low</em> <code>(* 2</code> <em>step</em><code>)), &hellip;, (+</code> <em>low</em> <code>(*</code> <em>n</em> <em>step</em><code>))</code>,</p></blockquote>
+
+<p>where <em>n</em> is the greatest integer such that <code>(+</code> <em>low</em> <code>(*</code> <em>n</em> <em>step</em><code>))</code>
+<code>&lt;</code> <em>end</em> if <em>step</em> is positive, or such that <code>(+</code> <em>low</em> <code>(*</code> <em>n</em> <em>step</em><code>))</code>
+<code>&gt;</code> <em>end</em> if <em>step</em> is negative. It is an error if <em>step</em> is zero.</p>
 
 <h3 id="Predicates">Predicates</h3>
 
