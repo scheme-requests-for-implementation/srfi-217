@@ -3,7 +3,7 @@
 (module (srfi 217)
   (iset list->iset
    list->iset!
-   iset-unfold make-iset-range
+   iset-unfold make-range-iset
    iset-member
    iset-min iset-max
    iset? iset-contains?

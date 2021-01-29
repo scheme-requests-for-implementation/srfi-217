@@ -117,7 +117,7 @@
 (define pos-set+ (iset-adjoin pos-set 9))
 (define neg-set (list->iset neg-seq))
 (define mixed-set (list->iset mixed-seq))
-(define dense-set (make-iset-range 0 49))
+(define dense-set (make-range-iset 0 49))
 (define sparse-set (list->iset sparse-seq))
 
 (define all-test-sets
@@ -172,7 +172,10 @@
 
   (test-equal iset=?
               (list->iset (iota 20 -10))
-              (make-iset-range -10 10))
+              (make-range-iset -10 10))
+  (test-equal iset=?
+              (list->iset (iota 10 -10 2))
+              (make-range-iset -10 10 2))
   )
 
 (define (check-predicates)
@@ -191,7 +194,7 @@
   (test-assert (iset-disjoint? pos-set neg-set))
   (test-assert (iset-disjoint? (iset) pos-set))
   (test-not (iset-disjoint? dense-set sparse-set))
-  (test-not (iset-disjoint? (make-iset-range 20 30) (make-iset-range 29 39)))
+  (test-not (iset-disjoint? (make-range-iset 20 30) (make-range-iset 29 39)))
   )
 
 (define (check-accessors)

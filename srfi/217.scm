@@ -61,14 +61,24 @@
           (assume (valid-integer? n))
           (lp (trie-insert trie n) (successor seed))))))
 
-(define (make-iset-range low high)
-  (assume (valid-integer? low))
-  (assume (valid-integer? high))
-  (assume (>= high low))
-  (iset-unfold (lambda (i) (= i high))
-               values
-               (lambda (i) (+ i 1))
-               low))
+(define make-range-iset
+  (case-lambda
+    ((start end) (make-range-iset start end 1))  ; TODO: Tune this case.
+    ((start end step)
+     (assume (valid-integer? start))
+     (assume (valid-integer? end))
+     (assume (valid-integer? step))
+     (assume (if (< end start)
+                 (negative? step)
+                 (not (zero? step)))
+             "Invalid step value.")
+     (let ((stop? (if (positive? step)
+                      (lambda (i) (>= i end))
+                      (lambda (i) (<= i end)))))
+       (iset-unfold stop?
+                    values
+                    (lambda (i) (+ i step))
+                    start)))))
 
 ;;;; Predicates
 
