@@ -171,6 +171,28 @@
                    (lambda (_ ignore) (ignore #t))
                    (lambda (x _ remove) (remove #t))))
     (lambda (set _) (iset=? (iset 2 4) set))))
+
+  ;;; iset-delete-min / -max
+
+  (test-values (values #f (iset)) (iset-delete-min (iset)))
+  (test-values (values #t #t)
+               (let-values (((n mixed-set*) (iset-delete-min mixed-set)))
+                 (values (= n (car mixed-seq))
+                         (iset=? mixed-set* (list->iset (cdr mixed-seq))))))
+  (test-values (values #t #t)
+               (let-values (((n sparse-set*) (iset-delete-min sparse-set)))
+                 (values (= n (car sparse-seq))
+                         (iset=? sparse-set* (list->iset (cdr sparse-seq))))))
+
+  (test-values (values #f (iset)) (iset-delete-max (iset)))
+  (test-values (values #t #t)
+               (let-values (((n mixed-set*) (iset-delete-max mixed-set)))
+                 (values (= n (last mixed-seq))
+                         (iset=? mixed-set* (list->iset (init mixed-seq))))))
+  (test-values (values #t #t)
+               (let-values (((n sparse-set*) (iset-delete-max sparse-set)))
+                 (values (= n (last sparse-seq))
+                         (iset=? sparse-set* (list->iset (init sparse-seq))))))
   )
 
 (test-group "Whole set operations"
