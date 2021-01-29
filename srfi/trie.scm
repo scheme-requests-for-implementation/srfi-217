@@ -118,13 +118,27 @@
 (define (ibitmap k)
   (fxarithmetic-shift 1 (isuffix k)))
 
+(define (trie-insert-parts trie prefix bitmap)
+  (letrec
+   ((ins
+     (lambda (t)
+       (cond ((not t) (raw-leaf prefix bitmap))
+             ((leaf? t)
+              (let*-leaf (((p b) t))
+                (if (fx=? prefix p)
+                    (raw-leaf prefix (fxior b bitmap))
+                    (trie-join prefix 0 (raw-leaf prefix bitmap) p 0 t))))
+             (else
+              (let*-branch (((p m l r) t))
+                (if (match-prefix? prefix p m)
+                    (if (zero-bit? prefix m)
+                        (branch p m (ins l) r)
+                        (branch p m l (ins r)))
+                    (trie-join prefix 0 (raw-leaf prefix bitmap) p m t))))))))
+    (ins trie)))
+
 (define (trie-insert trie key)
-  (let-values (((trie* _)
-                (trie-search trie
-                             key
-                             (lambda (insert _) (insert #t))
-                             (lambda (_k update _r) (update key #t)))))
-    trie*))
+  (trie-insert-parts trie (iprefix key) (ibitmap key)))
 
 (define (trie-join prefix1 mask1 trie1 prefix2 mask2 trie2)
   (let ((m (branching-bit prefix1 mask1 prefix2 mask2)))
