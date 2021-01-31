@@ -139,7 +139,7 @@
 (define (check-copying-and-conversion)
   (print-header "Copying and conversion")
 
-  ;;; iset-copy 
+  ;;; iset-copy
   (test-assert (not (eqv? (iset-copy pos-set) pos-set)))
   (test-assert (every (lambda (set)
                         (iset-every? (lambda (n) (iset-contains? set n))

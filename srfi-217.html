@@ -95,7 +95,7 @@ and may be provided in a future SRFI.</p>
         (let ((iset1 (iset 1 2 3)))
           (iset-adjoin! iset1 4)) ; Add 4 to {1,2,3}.
 </pre>
-  
+
 <p>So clients of these procedures write in a functional style, but must additionally be sure that, when the procedure is called, there are no other live pointers to the potentially-modified iset (hence the term "linear update").</p>
 
 <p>There are two benefits to this convention:</p>
@@ -321,7 +321,7 @@ Returns <code>#t</code> if any element of <em>iset</em> satisfies <em>predicate<
 
 <p><code>(iset-every? </code><em>predicate iset</em><code>)</code></p><p>
 
-Returns <code>#t</code> if every element of <em>iset</em> satisfies <em>predicate</em>, or <code>#f</code> otherwise.  Note that this differs from the SRFI 1 analogue because it does not return an element of the iset.  
+Returns <code>#t</code> if every element of <em>iset</em> satisfies <em>predicate</em>, or <code>#f</code> otherwise.  Note that this differs from the SRFI 1 analogue because it does not return an element of the iset.
 
 </p>
 
@@ -498,7 +498,7 @@ Return a newly allocated iset that is the union, intersection, asymmetric differ
 
 </p><p><code>(iset-difference! </code><em>iset<sub>1</sub> iset<sub>2</sub> iset<sub>3</sub></em> ...<code>)</code>
 
-</p><p><code>(iset-xor! </code><em>iset<sub>1</sub> iset<sub>2</sub></em><code>)</code></p>  
+</p><p><code>(iset-xor! </code><em>iset<sub>1</sub> iset<sub>2</sub></em><code>)</code></p>
 
 <p>Linear update procedures returning a iset that is the union, intersection, asymmetric difference, or symmetric difference of the <em>isets</em>.  Asymmetric difference is extended to more than two isets by taking the difference between the first iset and the union of the others.  Symmetric difference is not extended beyond two isets.  Elements in the result iset are drawn from the first iset in which they appear.</p>
 
