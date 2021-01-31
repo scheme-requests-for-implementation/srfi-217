@@ -427,10 +427,7 @@ Returns a newly allocated iset, created as if by <code>iset</code>, that contain
 
 Returns a iset that contains the elements of both <em>iset</em> and <em>list</em>.  Duplicate elements are omitted.</p>
 
-<pre class="example"><code>(let ((set (iset 2 3 5)))
-  (list-&gt;iset! set '(-3 -1 0))
-  (iset-&gt;list set))
- ⇒ (-3 -1 0 2 3 5)
+<pre class="example"><code>(iset->list (list-&gt;iset! (iset 2 3 5) '(-3 -1 0))) ⇒ (-3 -1 0 2 3 5)
 </code></pre>
 
 <h3 id="Subsets">Subsets</h3>
