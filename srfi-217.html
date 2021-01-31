@@ -333,7 +333,7 @@ Returns <code>#t</code> if every element of <em>iset</em> satisfies <em>predicat
 
 <p><code>(iset-map </code><em>proc iset</em><code>)</code></p>
 
-<p>Applies <em>proc</em> to each element of <em>iset</em> in arbitrary order and returns a newly allocated iset, created as if by <code>iset</code>, which contains the results of the applications.  For example:</p>
+<p>Applies <em>proc</em> to each element of <em>iset</em> in arbitrary order and returns a newly allocated iset, created as if by <code>iset</code>, which contains the results of the applications.  It is an error if <em>proc</em> returns a value that is not an exact integer.</p>
 
 <pre class="example">
 (iset-map (lambda (x) (* 10 x)) (iset 1 11 21))
