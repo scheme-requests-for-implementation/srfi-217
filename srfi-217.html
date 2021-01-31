@@ -425,7 +425,7 @@ Returns a newly allocated iset, created as if by <code>iset</code>, that contain
 
 <p><code>(list-&gt;iset! </code><em>iset list</em><code>)</code></p><p>
 
-Returns a iset that contains the elements of both <em>iset</em> and <em>list</em>.  Duplicate elements are omitted.</p>
+Returns a iset that contains the elements of both <em>iset</em> and <em>list</em>.  Duplicate elements are omitted.  <code>list-&gt;iset!</code> may mutate <em>iset</em> rather than allocating a new iset.</p>
 
 <pre class="example"><code>(iset->list (list-&gt;iset! (iset 2 3 5) '(-3 -1 0))) ⇒ (-3 -1 0 2 3 5)
 </code></pre>
