@@ -183,14 +183,25 @@
   (assume (procedure? success))
   (call-with-current-continuation
    (lambda (return)
-     (let-values (((trie obj)
-                   (trie-search (iset-trie set)
-                                elt
-                                (lambda (insert ignore)
-                                  (failure insert
-                                           (lambda (obj)
-                                             (return set obj))))
-                                success)))
+     (let-values
+      (((trie obj)
+        (trie-search (iset-trie set)
+                     elt
+                     (lambda (insert ignore)
+                       (failure insert
+                                (lambda (obj)
+                                  (return set obj))))
+                     (lambda (key update remove)
+                       (success
+                        key
+                        (lambda (new obj)
+                          (assume (valid-integer? new))
+                          (if (fx=? key new)
+                              (update new obj)
+                              (return (iset-adjoin (iset-delete set key)
+                                                   new)
+                                      obj)))
+                        remove)))))
        (values (raw-iset trie) obj)))))
 
 (define (iset-search! set elt failure success)

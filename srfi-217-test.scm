@@ -271,7 +271,7 @@
                    (lambda (x _ remove) (remove #t))))
     (lambda (set _) (iset=? (iset 2 3 4) set))))
 
-  ;; iset-search update
+  ;; iset-search update with same element.
   (test-assert
    (call-with-values
     (lambda ()
@@ -280,6 +280,16 @@
                    (lambda (insert _) (insert #t))
                    (lambda (x update _) (update 3 #t))))
     (lambda (set _) (iset=? (iset 2 3 4) set))))
+
+  ;; iset-search update with different element.
+  (test-assert
+   (call-with-values
+    (lambda ()
+      (iset-search (iset 2 3 4)
+                   3
+                   (lambda (insert _) (insert #t))
+                   (lambda (x update _) (update 5 #t))))
+    (lambda (set _) (iset=? (iset 2 4 5) set))))
 
   ;; iset-search remove
   (test-assert
