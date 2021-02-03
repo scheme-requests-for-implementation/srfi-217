@@ -62,19 +62,6 @@
           (lp (trie-insert trie n) (successor seed))))))
 
 ;; TODO: Optimize step = 1 case.
-(define iset-iota
-  (case-lambda
-    ((size) (iset-iota size 0 1))
-    ((size start) (iset-iota size start 1))
-    ((size start step)
-     (assume (valid-integer? size))
-     (assume (valid-integer? start))
-     (assume (valid-integer? step))
-     (iset-unfold (lambda (i) (= i size))
-                  (lambda (i) (+ start (* i step)))
-                  (lambda (i) (+ i 1))
-                  0))))
-
 (define make-range-iset
   (case-lambda
     ((start end) (make-range-iset start end 1))  ; TODO: Tune this case.

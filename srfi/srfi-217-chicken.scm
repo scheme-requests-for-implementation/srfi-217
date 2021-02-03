@@ -4,7 +4,6 @@
   (iset list->iset
    list->iset!
    iset-unfold make-range-iset
-   iset-iota
    iset-member
    iset-min iset-max
    iset? iset-contains?
