@@ -362,13 +362,18 @@
 
 ;;;; Set theory operations
 
-;; TODO: Tune two-set path.
-(define (iset-union set . sets)
-  (raw-iset (fold (lambda (s t)
-                    (assume (iset? s))
-                    (trie-union (iset-trie s) t))
-                  (iset-trie set)
-                  sets)))
+(define iset-union
+  (case-lambda
+    ((set1 set2)
+     (assume (iset? set1))
+     (assume (iset? set2))
+     (raw-iset (trie-union (iset-trie set1) (iset-trie set2))))
+    ((set . rest)
+     (raw-iset (fold (lambda (s t)
+                       (assume (iset? s))
+                       (trie-union (iset-trie s) t))
+                     (iset-trie set)
+                     rest)))))
 
 (define (iset-union! set . rest)
   (apply iset-union set rest))
