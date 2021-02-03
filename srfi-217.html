@@ -120,7 +120,7 @@ results may differ from that shown here.</p>
 
 <h3 id="Index">Index</h3>
 
-<ul><li><p><a href="#Constructors">Constructors</a>: <code>iset</code>, <code>iset-unfold</code>, <code>iset-iota</code>, <code>make-range-iset</code></p>
+<ul><li><p><a href="#Constructors">Constructors</a>: <code>iset</code>, <code>iset-unfold</code>, <code>make-range-iset</code></p>
 </li><li><p><a href="#Predicates">Predicates</a>: <code>iset?</code>, <code>iset-contains?</code>, <code>iset-empty?</code>, <code>iset-disjoint?</code></p>
 </li><li><p><a href="#Accessors">Accessors</a>: <code>iset-member</code>, <code>iset-min</code>, <code>iset-max</code></p>
 </li><li><p><a href="#Updaters">Updaters</a>: <code>iset-adjoin</code>, <code>iset-adjoin!</code>, <code>iset-delete</code>, <code>iset-delete!</code>, <code>iset-delete-all</code>, <code>iset-delete-all!</code>, <code>iset-search</code>, <code>iset-search!</code></p>
@@ -152,22 +152,6 @@ results may differ from that shown here.</p>
                          (lambda (n) (* n 2))
                          2))
  ⇒ (2 4 8 16 32 64)
-</code></pre>
-
-<p><code>(iset-iota</code> <em>size</em> <code>[</code><em>start</em> <code>[</code><em>step</em><code>]])</code></p>
-
-<p>Returns a newly allocated iset specified by a size (a non-negative
-exact integer) as well as an inclusive lower bound <em>start</em> (default 0)
-and a <em>step</em> value (default 1), both of which are exact integers.
-This constructor produces an iset containing the sequence</p>
-
-<blockquote>
-<p><em>start</em><code>, (+</code> <em>start</em> <em>step</em><code>), (+</code> <em>start</em> <code>(* 2</code> <em>step</em><code>)), &hellip;, (+</code> <em>start</em> <code>(* (-</code> <em>size</em> <code>1)</code> <em>step</em><code>))</code></p>
-</blockquote>
-
-<pre class="example"><code>(iset->list (iset-iota 10)) ⇒ (1 2 3 4 5 6 7 8 9 10)
-(iset->list (iset-iota 5 6)) ⇒ (6 7 8 9 10)
-(iset->list (iset-iota 5 -50 -10)) ⇒ (-50 -60 -70 -80 -90)
 </code></pre>
 
 <p><code>(make-range-iset</code> <em>start</em> <em>end</em> <code>[</code><em>step</em><code>])</code></p>
