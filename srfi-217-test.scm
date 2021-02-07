@@ -1,11 +1,104 @@
+;;; Copyright (C) 2020 Wolfgang Corcoran-Mathe
+;;;
+;;; Permission is hereby granted, free of charge, to any person obtaining a
+;;; copy of this software and associated documentation files (the
+;;; "Software"), to deal in the Software without restriction, including
+;;; without limitation the rights to use, copy, modify, merge, publish,
+;;; distribute, sublicense, and/or sell copies of the Software, and to
+;;; permit persons to whom the Software is furnished to do so, subject to
+;;; the following conditions:
+;;;
+;;; The above copyright notice and this permission notice shall be included
+;;; in all copies or substantial portions of the Software.
+;;;
+;;; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+;;; OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+;;; MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+;;; IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+;;; CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+;;; TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+;;; SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
 (import (scheme base)
+        (scheme write)
         (srfi 217)
-        (chibi test)
         (only (srfi 1) iota any every last take-while drop-while count
                        fold filter remove last partition)
         )
 
-;;; Utility
+(cond-expand
+  ((library (srfi 78))
+   (import (srfi 78)))
+  (else
+    (begin
+      (define *tests-failed* 0)
+      (define-syntax check
+        (syntax-rules (=>)
+          ((check expr => expected)
+           (if (equal? expr expected)
+             (begin
+               (display 'expr)
+               (display " => ")
+               (display expected)
+               (display " ; correct")
+               (newline))
+             (begin
+               (set! *tests-failed* (+ *tests-failed* 1))
+               (display "FAILED: for ")
+               (display 'expr)
+               (display " expected ")
+               (display expected)
+               (display " but got ")
+               (display expr)
+               (newline))))))
+      (define (check-report)
+        (if (zero? *tests-failed*)
+            (begin
+             (display "All tests passed.")
+             (newline))
+            (begin
+             (display "TESTS FAILED: ")
+             (display *tests-failed*)
+             (newline)))))))
+
+;;; (chibi test) / SRFI 78 shims
+
+(define-syntax test-assert
+  (syntax-rules ()
+    ((_ expr)
+     (check expr => #t))))
+
+(define-syntax test-not
+  (syntax-rules ()
+    ((_ expr)
+     (check expr => #f))))
+
+(define-syntax test
+  (syntax-rules ()
+    ((_ expected expr)
+     (check expr => expected))))
+
+(define-syntax test-equal
+  (syntax-rules ()
+    ((_ equal expected expr)
+     (check (equal expr expected) => #t))))
+
+;; Reify multiple values as lists.  Unfortunately, this looks rather
+;; ugly on output.  Why doesn't SRFI 78 provide a real MV test form?
+(define-syntax test-values
+  (syntax-rules ()
+    ((test-values expected expr)
+     (check (let-values ((vs expr)) vs)
+      => (let-values ((us expected)) us)))))
+
+;;;; Utility
+
+(define (print-header message)
+  (newline)
+  (display ";;; ")
+  (display message)
+  (display " ...")
+  (newline))
 
 (define (init xs)
   (if (null? (cdr xs))
@@ -31,16 +124,21 @@
   (list pos-set neg-set mixed-set dense-set sparse-set))
 
 ;; Most other test groups use iset=?, so test this first.
-(test-group "iset=?"
-  (test #t (iset=? (iset) (iset)))
-  (test #f (iset=? (iset 1) (iset)))
-  (test #f (iset=? (iset) (iset 1)))
-  (test #t (iset=? (iset 1 2 3 4) (iset 1 2 3 4)))
-  (test #t (iset=? (iset 1 2 3 4) (iset 2 1 4 3) (iset 3 2 1 4)))
-  (test #f (iset=? (iset 1 2 3 4) (iset 2 3 4)))
-  (test #f (iset=? pos-set neg-set)))
+(define (check-iset=?)
+  (print-header "iset=?")
 
-(test-group "Copying and conversion"
+  (test-assert (iset=? (iset) (iset)))
+  (test-not (iset=? (iset 1) (iset)))
+  (test-not (iset=? (iset) (iset 1)))
+  (test-assert (iset=? (iset 1 2 3 4) (iset 1 2 3 4)))
+  (test-assert (iset=? (iset 1 2 3 4) (iset 2 1 4 3) (iset 3 2 1 4)))
+  (test-not (iset=? (iset 1 2 3 4) (iset 2 3 4)))
+  (test-not (iset=? pos-set neg-set))
+  )
+
+(define (check-copying-and-conversion)
+  (print-header "Copying and conversion")
+
   ;;; iset-copy
   (test-assert (not (eqv? (iset-copy pos-set) pos-set)))
   (test-assert (every (lambda (set)
@@ -62,7 +160,9 @@
               (list->iset! (iset-copy pos-set) '(2 4 6)))
   )
 
-(test-group "Constructors"
+(define (check-constructors)
+  (print-header "Constructors")
+
   (test-equal iset=?
               (list->iset (iota 10 0 4))
               (iset-unfold (lambda (i) (> i 36))
@@ -78,7 +178,9 @@
               (make-range-iset -10 10 2))
   )
 
-(test-group "Predicates"
+(define (check-predicates)
+  (print-header "Predicates")
+
   (test-not (iset-contains? (iset) 1))
   (test-assert (every (lambda (n) (iset-contains? pos-set n))
                       (iota 20 100 3)))
@@ -95,7 +197,9 @@
   (test-not (iset-disjoint? (make-range-iset 20 30) (make-range-iset 29 39)))
   )
 
-(test-group "Accessors"
+(define (check-accessors)
+  (print-header "Accessors")
+
   (test 103 (iset-member pos-set 103 #f))
   (test 'z (iset-member pos-set 104 'z))
 
@@ -112,7 +216,9 @@
   (test (last mixed-seq) (iset-max mixed-set))
   )
 
-(test-group "Updaters"
+(define (check-updaters)
+  (print-header "Updaters")
+
   (test '(1) (iset->list (iset-adjoin (iset) 1)))
   (test-assert (iset-contains? (iset-adjoin neg-set 10) 10))
   (test-assert (iset-contains? (iset-adjoin dense-set 100) 100))
@@ -208,7 +314,9 @@
                          (iset=? sparse-set* (list->iset (init sparse-seq))))))
   )
 
-(test-group "Whole set operations"
+(define (check-whole-set)
+  (print-header "Whole set operations")
+
   (test 0 (iset-size (iset)))
   (test (length pos-seq) (iset-size pos-set))
   (test (length mixed-seq) (iset-size mixed-set))
@@ -232,7 +340,9 @@
   (test (count even? sparse-seq) (iset-count even? sparse-set))
   )
 
-(test-group "Iterators"
+(define (check-iterators)
+  (print-header "Iterators")
+
   (test (fold + 0 pos-seq) (iset-fold + 0 pos-set))
   (test (fold + 0 sparse-seq) (iset-fold + 0 sparse-set))
   (test (iset-size neg-set) (iset-fold (lambda (_ c) (+ c 1)) 0 neg-set))
@@ -286,7 +396,9 @@
           (iset=? out (list->iset lout)))))
   )
 
-(test-group "Comparison"
+(define (check-comparison)
+  (print-header "Comparison")
+
   (test-assert (iset<? (iset) pos-set))
   (test-assert (iset<? pos-set pos-set+))
   (test-not    (iset<? pos-set pos-set))
@@ -313,7 +425,9 @@
   (test-assert (iset>=? pos-set+ pos-set pos-set))
   )
 
-(test-group "Set theory"
+(define (check-set-theory)
+  (print-header "Set theory")
+
   (test-equal iset=? mixed-set (iset-union! (iset) mixed-set))
   (test-equal iset=?
               (list->iset (append (iota 20 100 3) (iota 20 -100 3)))
@@ -363,7 +477,9 @@
               (iset-xor pos-set (list->iset (iota 17 109 3))))
   )
 
-(test-group "Subsets"
+(define (check-subsets)
+  (print-header "Subsets")
+
   (test-assert (iset-empty? (iset-open-interval (iset) 0 10)))
   (test-equal iset=?
               (iset 103 106)
@@ -429,3 +545,20 @@
               (isubset>= mixed-set 38))
   (test-assert (iset-empty? (isubset>= mixed-set 50)))
   )
+
+(define (check-all)
+  (check-iset=?)
+  (check-copying-and-conversion)
+  (check-constructors)
+  (check-predicates)
+  (check-accessors)
+  (check-updaters)
+  (check-whole-set)
+  (check-iterators)
+  (check-comparison)
+  (check-set-theory)
+  (check-subsets)
+  (newline)
+  (check-report))
+
+(check-all)

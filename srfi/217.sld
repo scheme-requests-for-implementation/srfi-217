@@ -1,6 +1,8 @@
-(define-library (iset-trie)
+(define-library (srfi 217)
   (import (scheme base)
-          (only (srfi 1) fold)
+          (scheme case-lambda)
+          (scheme inexact)
+          (only (srfi 1) fold every xcons)
           (srfi 143))
 
   (cond-expand
@@ -14,18 +16,24 @@
            (or expr (car 0))))))))
 
   (export iset list->iset
-          iset-unfold make-iset-range
+          list->iset!
+          iset-unfold make-range-iset
           iset-member
           iset-min iset-max
           iset? iset-contains?
           iset-empty? iset-disjoint?
           iset-adjoin iset-adjoin! iset-delete iset-delete! iset-delete-all
           iset-delete-all!
+          iset-search
+          iset-search!
+          iset-delete-min iset-delete-max
+          iset-delete-min! iset-delete-max!
           iset-size
           iset-any? iset-every?
           iset-count iset-fold
           iset-map iset-for-each
           iset-filter iset-remove
+          iset-partition iset-partition!
           iset-copy
           iset->list
           iset=?
@@ -35,10 +43,12 @@
           iset-difference iset-difference!
           iset-xor iset-xor!
           iset-open-interval iset-closed-interval iset-open-closed-interval
-          iset-closed-open-interval iset-range= iset-range< iset-range<=
-          iset-range> iset-range>=
-          iset-trie  ; debug
+          iset-closed-open-interval isubset= isubset< isubset<=
+          isubset> isubset>=
+          ;; debug
+          iset-trie
+          highest-set-bit
           )
 
   (include "trie.scm")
-  (include "iset-trie.scm"))
+  (include "217.scm"))

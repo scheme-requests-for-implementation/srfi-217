@@ -29,13 +29,26 @@
 (define (iset . args)
   (list->iset args))
 
+(define (pair-or-null? x)
+  (or (pair? x) (null? x)))
+
 (define (list->iset ns)
+  (assume (pair-or-null? ns))
   (raw-iset
    (fold (lambda (n t)
            (assume (valid-integer? n))
            (trie-insert t n))
          #f
          ns)))
+
+(define (list->iset! set ns)
+  (assume (iset? set))
+  (assume (pair-or-null? ns))
+  (raw-iset (fold (lambda (n t)
+                    (assume (valid-integer? n))
+                    (trie-insert t n))
+                  (iset-trie set)
+                  ns)))
 
 (define (iset-unfold stop? mapper successor seed)
   (assume (procedure? stop?))
@@ -48,16 +61,25 @@
           (assume (valid-integer? n))
           (lp (trie-insert trie n) (successor seed))))))
 
-;; TODO: Bitmap compression will enable a much more efficient version
-;; of this.
-(define (make-iset-range low high)
-  (assume (valid-integer? low))
-  (assume (valid-integer? high))
-  (assume (>= high low))
-  (iset-unfold (lambda (i) (= i high))
-               values
-               (lambda (i) (+ i 1))
-               low))
+;; TODO: Optimize step = 1 case.
+(define make-range-iset
+  (case-lambda
+    ((start end) (make-range-iset start end 1))  ; TODO: Tune this case.
+    ((start end step)
+     (assume (valid-integer? start))
+     (assume (valid-integer? end))
+     (assume (valid-integer? step))
+     (assume (if (< end start)
+                 (negative? step)
+                 (not (zero? step)))
+             "Invalid step value.")
+     (let ((stop? (if (positive? step)
+                      (lambda (i) (>= i end))
+                      (lambda (i) (<= i end)))))
+       (iset-unfold stop?
+                    values
+                    (lambda (i) (+ i step))
+                    start)))))
 
 ;;;; Predicates
 
@@ -85,60 +107,127 @@
 (define (iset-min set)
   (assume (iset? set))
   (let ((trie (iset-trie set)))
-    (if (branch? trie)
-        (%trie-find-leftmost
+    (%trie-find-least
+     (if (branch? trie)
          (if (negative? (branch-branching-bit trie))
              (branch-right trie)
-             (branch-left trie)))
-        trie)))  ; #f or leaf
+             (branch-left trie))
+         trie))))
 
 (define (iset-max set)
   (assume (iset? set))
   (let ((trie (iset-trie set)))
-    (if (branch? trie)
-        (%trie-find-rightmost
+    (%trie-find-greatest
+     (if (branch? trie)
          (if (negative? (branch-branching-bit trie))
              (branch-left trie)
-             (branch-right trie)))
-        trie)))  ; #f or leaf
+             (branch-right trie))
+         trie))))
 
 ;;;; Updaters
 
-;; FIXME: Not in the pre-SRFI, but should be added.
-(define (iset-adjoin set n)
-  (assume (iset? set))
-  (assume (valid-integer? n))
-  (raw-iset (trie-insert (iset-trie set) n)))
+(define iset-adjoin
+  (case-lambda
+    ((set n)
+     (assume (iset? set))
+     (assume (valid-integer? n))
+     (raw-iset (trie-insert (iset-trie set) n)))
+    ((set . ns)
+     (raw-iset
+      (fold (lambda (n t)
+              (assume (valid-integer? n))
+              (trie-insert t n))
+            (iset-trie set)
+            ns)))))
 
-(define (iset-adjoin! set n) (iset-adjoin set n))
+(define (iset-adjoin! set . ns)
+  (apply iset-adjoin set ns))
 
-(define (iset-delete set n)
-  (assume (iset? set))
-  (assume (valid-integer? n))
-  (raw-iset (trie-delete (iset-trie set) n)))
+(define iset-delete
+  (case-lambda
+    ((set n)
+     (assume (iset? set))
+     (assume (valid-integer? n))
+     (raw-iset (trie-delete (iset-trie set) n)))
+    ((set . ns) (iset-delete-all set ns))))
 
 (define (iset-delete! set n) (iset-delete set n))
 
-;; FIXME: Not in the pre-SRFI, but should be added.
-;; Implement this in terms of set difference?
 (define (iset-delete-all set ns)
   (assume (iset? set))
   (assume (or (pair? ns) (null? ns)))
-  (raw-iset (trie-remove (lambda (m) (member m ns fx=?))
-                         (iset-trie set))))
+  (iset-difference set (list->iset ns)))
 
 (define (iset-delete-all! set ns)
   (iset-delete-all set ns))
+
+;; Thanks to the authors of SRFI 146 for providing examples
+;; of how to implement this shoggoth.
+(define (iset-search set elt failure success)
+  (assume (iset? set))
+  (assume (valid-integer? elt))
+  (assume (procedure? failure))
+  (assume (procedure? success))
+  (call-with-current-continuation
+   (lambda (return)
+     (let-values
+      (((trie obj)
+        (trie-search (iset-trie set)
+                     elt
+                     (lambda (insert ignore)
+                       (failure insert
+                                (lambda (obj)
+                                  (return set obj))))
+                     (lambda (key update remove)
+                       (success
+                        key
+                        (lambda (new obj)
+                          (assume (valid-integer? new))
+                          (if (fx=? key new)
+                              (update new obj)
+                              (return (iset-adjoin (iset-delete set key)
+                                                   new)
+                                      obj)))
+                        remove)))))
+       (values (raw-iset trie) obj)))))
+
+(define (iset-search! set elt failure success)
+  (iset-search set elt failure success))
+
+(define (iset-delete-min set)
+  (assume (iset? set))
+  (let ((trie (iset-trie set)))
+    (if (branch? trie)
+        (let*-branch (((p m l r) trie))
+          (if (fxnegative? m)
+              (let-values (((n r*) (trie-delete-min r)))
+                (values n (raw-iset (branch p m l r*))))
+              (let-values (((n l*) (trie-delete-min l)))
+                (values n (raw-iset (branch p m l* r))))))
+        (let-values (((n trie*) (trie-delete-min trie)))
+          (values n (raw-iset trie*))))))
+
+(define (iset-delete-max set)
+  (assume (iset? set))
+  (let ((trie (iset-trie set)))
+    (if (branch? trie)
+        (let*-branch (((p m l r) trie))
+          (if (fxnegative? m)
+              (let-values (((n l*) (trie-delete-max l)))
+                (values n (raw-iset (branch p m l* r))))
+              (let-values (((n r*) (trie-delete-max r)))
+                (values n (raw-iset (branch p m l r*))))))
+        (let-values (((n trie*) (trie-delete-max trie)))
+          (values n (raw-iset trie*))))))
+
+(define (iset-delete-min! set) (iset-delete-min set))
+(define (iset-delete-max! set) (iset-delete-max set))
 
 ;;;; The whole iset
 
 (define (iset-size set)
   (assume (iset? set))
-  (let lp ((acc 0) (t (iset-trie set)))
-    (cond ((not t) acc)
-          ((integer? t) (+ acc 1))
-          (else
-           (lp (lp acc (branch-left t)) (branch-right t))))))
+  (trie-size (iset-trie set)))
 
 (define (iset-count pred set)
   (assume (procedure? pred))
@@ -191,19 +280,11 @@
 (define (iset-fold proc nil set)
   (assume (procedure? proc))
   (assume (iset? set))
-  (letrec
-   ((cata
-     (lambda (b t)
-       (cond ((not t) b)
-             ((integer? t) (proc t b))
-             (else
-              (cata (cata b (branch-left t)) (branch-right t)))))))
-    (let ((trie (iset-trie set)))
-      (if (branch? trie)
-          (if (negative? (branch-branching-bit trie))
-              (cata (cata nil (branch-left trie)) (branch-right trie))
-              (cata (cata nil (branch-right trie)) (branch-left trie)))
-          (cata nil trie)))))
+  (let ((trie (iset-trie set)))
+    (if (and (branch? trie) (positive? (branch-branching-bit trie)))
+        (trie-fold proc (trie-fold proc nil (branch-right trie))
+                        (branch-left trie))
+        (trie-fold proc nil trie))))
 
 (define (iset-filter pred set)
   (assume (procedure? pred))
@@ -214,6 +295,15 @@
   (assume (procedure? pred))
   (assume (iset? set))
   (raw-iset (trie-filter (lambda (n) (not (pred n))) (iset-trie set))))
+
+(define (iset-partition pred set)
+  (assume (procedure? pred))
+  (assume (iset? set))
+  (let-values (((tin tout) (trie-partition pred (iset-trie set))))
+    (values (raw-iset tin) (raw-iset tout))))
+
+(define (iset-partition! pred set)
+  (iset-partition pred set))
 
 ;;;; Copying and conversion
 
@@ -226,58 +316,97 @@
 
 ;;;; Comparison
 
-(define (iset=? set1 set2)
+(define (iset=? set1 set2 . sets)
   (assume (iset? set1))
-  (assume (iset? set2))
-  (or (eqv? set1 set2)         ; quick check
-      (trie=? (iset-trie set1) (iset-trie set2))))
+  (let ((iset-eq1 (lambda (set)
+                    (assume (iset? set))
+                    (or (eqv? set1 set)
+                        (trie=? (iset-trie set1) (iset-trie set))))))
+    (and (iset-eq1 set2)
+         (or (null? sets)
+             (every iset-eq1 sets)))))
 
-(define (iset<? set1 set2)
+(define (iset<? set1 set2 . sets)
   (assume (iset? set1))
   (assume (iset? set2))
-  (trie-proper-subset? (iset-trie set1) (iset-trie set2)))
+  (let lp ((t1 (iset-trie set1)) (t2 (iset-trie set2)) (sets sets))
+    (and (trie-proper-subset? t1 t2)
+         (or (null? sets)
+             (lp t2 (iset-trie (car sets)) (cdr sets))))))
 
-(define (iset>? set1 set2)
+(define (iset>? set1 set2 . sets)
   (assume (iset? set1))
   (assume (iset? set2))
-  (trie-proper-subset? (iset-trie set2) (iset-trie set1)))
+  (let lp ((t1 (iset-trie set1)) (t2 (iset-trie set2)) (sets sets))
+    (and (trie-proper-subset? t2 t1)
+         (or (null? sets)
+             (lp t2 (iset-trie (car sets)) (cdr sets))))))
 
-(define (iset<=? set1 set2)
+(define (iset<=? set1 set2 . sets)
   (assume (iset? set1))
   (assume (iset? set2))
-  (and (memv (trie-subset-compare (iset-trie set1) (iset-trie set2))
-             '(less equal))
-       #t))
+  (let lp ((t1 (iset-trie set1)) (t2 (iset-trie set2)) (sets sets))
+    (and (memv (trie-subset-compare t1 t2) '(less equal))
+         (or (null? sets)
+             (lp t2 (iset-trie (car sets)) (cdr sets))))))
 
-(define (iset>=? set1 set2)
-  (assume (iset? set1))
-  (assume (iset? set2))
-  (and (memv (trie-subset-compare (iset-trie set1) (iset-trie set2))
-             '(greater equal))
-       #t))
+(define (iset>=? set1 set2 . sets)
+     (assume (iset? set1))
+     (assume (iset? set2))
+     (let lp ((t1 (iset-trie set1)) (t2 (iset-trie set2)) (sets sets))
+       (and (memv (trie-subset-compare t1 t2) '(greater equal))
+            (or (null? sets)
+                (lp t2 (iset-trie (car sets)) (cdr sets))))))
 
 ;;;; Set theory operations
 
-(define (iset-union set1 set2)
-  (assume (iset? set1))
-  (assume (iset? set2))
-  (raw-iset (trie-merge trie-insert (iset-trie set1) (iset-trie set2))))
+(define iset-union
+  (case-lambda
+    ((set1 set2)
+     (assume (iset? set1))
+     (assume (iset? set2))
+     (raw-iset (trie-union (iset-trie set1) (iset-trie set2))))
+    ((set . rest)
+     (raw-iset (fold (lambda (s t)
+                       (assume (iset? s))
+                       (trie-union (iset-trie s) t))
+                     (iset-trie set)
+                     rest)))))
 
-(define (iset-union! set1 set2) (iset-union set1 set2))
+(define (iset-union! set . rest)
+  (apply iset-union set rest))
 
-(define (iset-intersection set1 set2)
-  (assume (iset? set1))
-  (assume (iset? set2))
-  (raw-iset (trie-intersection (iset-trie set1) (iset-trie set2))))
+(define iset-intersection
+  (case-lambda
+    ((set1 set2)
+     (assume (iset? set1))
+     (assume (iset? set2))
+     (raw-iset (trie-intersection (iset-trie set1) (iset-trie set2))))
+    ((set . rest)
+     (assume (iset? set))
+     (raw-iset (fold (lambda (s t)
+                       (assume (iset? s))
+                       (trie-intersection (iset-trie s) t))
+               (iset-trie set)
+               rest)))))
 
-(define (iset-intersection! set1 set2) (iset-intersection set1 set2))
+(define (iset-intersection! set . rest)
+  (apply iset-intersection set rest))
 
-(define (iset-difference set1 set2)
-  (assume (iset? set1))
-  (assume (iset? set2))
-  (raw-iset (trie-difference (iset-trie set1) (iset-trie set2))))
+(define iset-difference
+  (case-lambda
+    ((set1 set2)              ; fast path
+     (assume (iset? set1))
+     (assume (iset? set2))
+     (raw-iset (trie-difference (iset-trie set1) (iset-trie set2))))
+    ((set . rest)
+     (assume (iset? set))
+     (raw-iset
+      (trie-difference (iset-trie set)
+                       (iset-trie (apply iset-union rest)))))))
 
-(define (iset-difference! set1 set2) (iset-difference set1 set2))
+(define (iset-difference! set . rest)
+  (apply iset-difference set rest))
 
 (define (iset-xor set1 set2)
   (assume (iset? set1))
@@ -285,17 +414,14 @@
   (if (eqv? set1 set2)  ; quick check
       (iset)
       (raw-iset
-       (trie-merge trie-xor-insert (iset-trie set1) (iset-trie set2)))))
+       (trie-xor (iset-trie set1) (iset-trie set2)))))
 
 (define (iset-xor! set1 set2) (iset-xor set1 set2))
 
 ;;;; Subsets
 
-(define (iset-range= set k)
+(define (isubset= set k)
   (if (iset-contains? set k) (iset k) (iset)))
-
-;;; FIXME: The following procedures are implemented trivially in terms
-;;; of iset-filter.  Better versions to come.
 
 (define (iset-open-interval set low high)
   (assume (valid-integer? low))
@@ -321,22 +447,22 @@
   (assume (fx>=? high low))
   (raw-iset (subtrie-interval (iset-trie set) low high #t #f)))
 
-(define (iset-range< set k)
+(define (isubset< set k)
   (assume (iset? set))
   (assume (valid-integer? k))
   (raw-iset (subtrie< (iset-trie set) k #f)))
 
-(define (iset-range<= set k)
+(define (isubset<= set k)
   (assume (iset? set))
   (assume (valid-integer? k))
   (raw-iset (subtrie< (iset-trie set) k #t)))
 
-(define (iset-range> set k)
+(define (isubset> set k)
   (assume (iset? set))
   (assume (valid-integer? k))
   (raw-iset (subtrie> (iset-trie set) k #f)))
 
-(define (iset-range>= set k)
+(define (isubset>= set k)
   (assume (iset? set))
   (assume (valid-integer? k))
   (raw-iset (subtrie> (iset-trie set) k #t)))
