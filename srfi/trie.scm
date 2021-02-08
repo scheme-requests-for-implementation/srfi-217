@@ -20,23 +20,24 @@
 ;;; as an explicit value, not, e.g. as the default value of an
 ;;; (and ...) expression, to clarify its use as a trie value.
 
+;;;; Types and constructors
+
+;;; Leaves and branches are constructed so as to maintain the following
+;;; invariant: Every leaf and every subtrie contains at least one value.
+;;; This means that the empty trie (#f) never appears as a subtrie.
+
 (define-record-type <leaf>
   (raw-leaf prefix bitmap)
   leaf?
   (prefix leaf-prefix)
   (bitmap leaf-bitmap))
 
-;; Construct a leaf only if the bitmap is non-zero.
+;; The primary leaf constructor creates a leaf only if `bitmap'
+;; contains at least one value.
 (define (leaf prefix bitmap)
   (if (fxpositive? bitmap)
       (raw-leaf prefix bitmap)
       #f))
-
-;; Gives the maximum number of integers storable in a single leaf.
-(define leaf-bitmap-size (expt 2 (exact (floor (log fx-width 2)))))
-
-(define suffix-mask (- leaf-bitmap-size 1))
-(define prefix-mask (fxnot suffix-mask))
 
 ;; Shorthand for extracting leaf elements.
 (define-syntax let*-leaf
@@ -73,6 +74,15 @@
              (l (branch-left b))
              (r (branch-right b)))
          (let*-branch binds . body))))))
+
+;;;; Bitwise constants and procedures
+
+;; Constant.  Gives the maximum number of integers storable
+;; in a single leaf.
+(define leaf-bitmap-size (expt 2 (exact (floor (log fx-width 2)))))
+
+(define suffix-mask (- leaf-bitmap-size 1))
+(define prefix-mask (fxnot suffix-mask))
 
 (define (valid-integer? x) (fixnum? x))
 
@@ -118,13 +128,59 @@
 (define (ibitmap k)
   (fxarithmetic-shift 1 (isuffix k)))
 
+(define (bitmap-delete bitmap key)
+  (fxand bitmap (fxnot (ibitmap key))))
+
 (define (bitmap-delete-min b)
   (fxand b (fxnot (lowest-bit-mask b))))
 
 (define (bitmap-delete-max b)
   (fxand b (fxnot (highest-bit-mask b (lowest-bit-mask b)))))
 
-(define (trie-insert-parts trie prefix bitmap)
+;;;; Predicates and accessors
+
+(define (trie-contains? trie key)
+  (and trie
+       (if (leaf? trie)
+           (and (fx=? (iprefix key) (leaf-prefix trie))
+                (not (fxzero? (fxand (ibitmap key) (leaf-bitmap trie)))))
+           (let*-branch (((p m l r) trie))
+             (and (match-prefix? key p m)
+                  (if (zero-bit? key m)
+                      (trie-contains? l key)
+                      (trie-contains? r key)))))))
+
+(define (trie-min trie)
+  (letrec
+   ((search
+     (lambda (t)
+       (and t
+            (if (leaf? t)
+                (fx+ (leaf-prefix t) (fxfirst-set-bit (leaf-bitmap t)))
+                (search (branch-left t)))))))
+    (if (branch? trie)
+        (if (fxnegative? (branch-branching-bit trie))
+            (search (branch-right trie))
+            (search (branch-left trie)))
+        (search trie))))
+
+(define (trie-max trie)
+  (letrec
+   ((search
+     (lambda (t)
+       (and t
+            (if (leaf? t)
+                (fx+ (leaf-prefix t) (highest-set-bit (leaf-bitmap t)))
+                (search (branch-right t)))))))
+    (if (branch? trie)
+        (if (fxnegative? (branch-branching-bit trie))
+            (search (branch-left trie))
+            (search (branch-right trie)))
+        (search trie))))
+
+;;;; Insert
+
+(define (%trie-insert-parts trie prefix bitmap)
   (letrec
    ((ins
      (lambda (t)
@@ -144,24 +200,222 @@
     (ins trie)))
 
 (define (trie-insert trie key)
-  (trie-insert-parts trie (iprefix key) (ibitmap key)))
+  (%trie-insert-parts trie (iprefix key) (ibitmap key)))
+
+;;;; Iterators and filters
+
+;; Fold trie in increasing numerical order.
+(define (trie-fold proc nil trie)
+  (letrec
+   ((cata
+     (lambda (b t)
+       (cond ((not t) b)
+             ((leaf? t)
+              (fold-left-bits (leaf-prefix t) proc b (leaf-bitmap t)))
+             (else
+              (cata (cata b (branch-left t)) (branch-right t)))))))
+    (if (branch? trie)
+        (let*-branch (((p m l r) trie))
+          (if (fxnegative? m)
+              (cata (cata nil r) l)
+              (cata (cata nil l) r)))
+        (cata nil trie))))
+
+(define (fold-left-bits prefix proc nil bitmap)
+  (let loop ((bm bitmap) (acc nil))
+    (if (fxzero? bm)
+        acc
+        (let* ((mask (lowest-bit-mask bm))
+               (bi (fxfirst-set-bit mask)))
+          (loop (fxxor bm mask) (proc (fx+ prefix bi) acc))))))
+
+;; Fold trie in decreasing numerical order.
+(define (trie-fold-right proc nil trie)
+  (letrec
+   ((cata
+     (lambda (b t)
+       (cond ((not t) b)
+             ((leaf? t)
+              (fold-right-bits (leaf-prefix t) proc b (leaf-bitmap t)))
+             (else
+              (cata (cata b (branch-right t)) (branch-left t)))))))
+    (if (branch? trie)
+        (let*-branch (((p m l r) trie))
+          (if (fxnegative? m)
+              (cata (cata nil l) r)
+              (cata (cata nil r) l)))
+        (cata nil trie))))
+
+;; This might benefit from tuning.
+(define (fold-right-bits prefix proc nil bitmap)
+  (let loop ((bm bitmap) (acc nil))
+    (if (fxzero? bm)
+        acc
+        (let* ((mask (highest-bit-mask bm (lowest-bit-mask bm)))
+               (bi (fxfirst-set-bit mask)))
+          (loop (fxxor bm mask) (proc (fx+ prefix bi) acc))))))
+
+(define (bitmap-partition pred prefix bitmap)
+  (let loop ((i 0) (in 0) (out 0))
+    (cond ((fx=? i leaf-bitmap-size) (values in out))
+          ((fxbit-set? i bitmap)
+           (let ((bit (fxarithmetic-shift 1 i)))
+             (if (pred (fx+ prefix i))
+                 (loop (fx+ i 1) (fxior in bit) out)
+                 (loop (fx+ i 1) in (fxior out bit)))))
+          (else (loop (fx+ i 1) in out)))))
+
+(define (trie-partition pred trie)
+  (letrec
+   ((part
+     (lambda (t)
+       (cond ((not t) (values #f #f))
+             ((leaf? t)
+              (let*-leaf (((p bm) t))
+                (let-values (((in out) (bitmap-partition pred p bm)))
+                  (values (leaf p in) (leaf p out)))))
+             (else
+              (let-values (((p) (branch-prefix t))
+                           ((m) (branch-branching-bit t))
+                           ((il ol) (part (branch-left t)))
+                           ((ir or) (part (branch-right t))))
+                (values (branch p m il ir) (branch p m ol or))))))))
+    (part trie)))
+
+(define (bitmap-filter pred prefix bitmap)
+  (let loop ((i 0) (res 0))
+    (cond ((fx=? i leaf-bitmap-size) res)
+          ((and (fxbit-set? i bitmap) (pred (fx+ prefix i)))
+           (loop (fx+ i 1) (fxior res (fxarithmetic-shift 1 i))))
+          (else (loop (fx+ i 1) res)))))
+
+(define (trie-filter pred trie)
+  (cond ((not trie) #f)
+        ((leaf? trie)
+         (let*-leaf (((p bm) trie))
+           (leaf p (bitmap-filter pred p bm))))
+        (else
+         (branch (branch-prefix trie)
+                 (branch-branching-bit trie)
+                 (trie-filter pred (branch-left trie))
+                 (trie-filter pred (branch-right trie))))))
+
+;;;; Update operations
+
+(define (trie-delete trie key)
+  (letrec*
+   ((prefix (iprefix key))
+    (update
+     (lambda (t)
+       (cond ((not t) #f)
+             ((leaf? t)
+              (let*-leaf (((p bm) t))
+                (if (fx=? p prefix)
+                    (leaf p (bitmap-delete bm key))
+                    t)))
+             (else
+              (let*-branch (((p m l r) t))
+                (if (match-prefix? prefix p m)
+                    (if (zero-bit? prefix m)
+                        (branch p m (update l) r)
+                        (branch p m l (update r)))
+                    t)))))))
+    (update trie)))
+
+(define (trie-delete-min trie)
+  (letrec
+   ((update/min
+     (lambda (t)
+       (cond ((not t) (error "Empty set"))
+             ((leaf? t)
+              (let*-leaf (((p bm) t))
+                (values (+ p (fxfirst-set-bit bm))
+                        (leaf p (bitmap-delete-min bm)))))
+             (else
+              (let*-branch (((p m l r) t))
+                (let-values (((n l*) (update/min l)))
+                  (values n (branch p m l* r)))))))))
+    (if (branch? trie)
+        (let*-branch (((p m l r) trie))
+          (if (fxnegative? m)
+              (let-values (((n r*) (update/min r)))
+                (values n (branch p m l r*)))
+              (let-values (((n l*) (update/min l)))
+                (values n (branch p m l* r)))))
+        (update/min trie))))
+
+(define (trie-delete-max trie)
+  (letrec
+   ((update/max
+     (lambda (t)
+       (cond ((not t) (error "Empty set"))
+             ((leaf? t)
+              (let*-leaf (((p bm) t))
+                (values (+ p (highest-set-bit bm))
+                        (leaf p (bitmap-delete-max bm)))))
+             (else
+              (let*-branch (((p m l r) t))
+                (let-values (((n r*) (update/max r)))
+                  (values n (branch p m l r*)))))))))
+    (if (branch? trie)
+        (let*-branch (((p m l r) trie))
+          (if (fxnegative? m)
+              (let-values (((n l*) (update/max l)))
+                (values n (branch p m l* r)))
+              (let-values (((n r*) (update/max r)))
+                (values n (branch p m l r*)))))
+        (update/max trie))))
+
+;; Search trie for key, and construct a new trie using the results of
+;; failure and success.
+(define (trie-search trie key failure success)
+  (let* ((kp (iprefix key))
+         (key-leaf (raw-leaf kp (ibitmap key))))
+    (let lp ((t trie) (build values))
+      (cond ((not t)
+             (failure (lambda (obj) (build key-leaf obj))
+                      (lambda (obj) (build #f obj))))
+            ((leaf? t)
+             (%leaf-search t key failure success build))
+            (else
+             (let*-branch (((p m l r) t))
+               (if (match-prefix? key p m)
+                   (if (zero-bit? key m)
+                       (lp l (lambda (l* obj)
+                               (build (branch p m l* r) obj)))
+                       (lp r (lambda (r* obj)
+                               (build (branch p m l r*) obj))))
+                   (failure (lambda (obj)
+                              (build (trie-join kp 0 key-leaf p m t)
+                                     obj))
+                            (lambda (obj) (build t obj))))))))))
+
+(define (%leaf-search lf key failure success build)
+  (let ((kp (iprefix key)) (kb (ibitmap key)))
+    (let*-leaf (((p bm) lf))
+      (if (fx=? kp p)
+          (if (fxzero? (fxand kb bm))
+              (failure (lambda (obj)
+                         (build (raw-leaf p (fxior kb bm)) obj))
+                       (lambda (obj) (build lf obj)))
+              (success key
+                       (lambda (elt obj)
+                         (assume (eqv? key elt) "invalid new element")
+                         (build lf obj))
+                       (lambda (obj)
+                         (build (leaf p (bitmap-delete bm key)) obj))))
+          (failure (lambda (obj)
+                     (build (trie-join kp 0 (raw-leaf kp kb) p 0 lf)
+                            obj))
+                   (lambda (obj) (build lf obj)))))))
+
+;;;; Set-theoretical operations
 
 (define (trie-join prefix1 mask1 trie1 prefix2 mask2 trie2)
   (let ((m (branching-bit prefix1 mask1 prefix2 mask2)))
     (if (zero-bit? prefix1 m)
         (raw-branch (mask prefix1 m) m trie1 trie2)
         (raw-branch (mask prefix1 m) m trie2 trie1))))
-
-(define (trie-contains? trie key)
-  (and trie
-       (if (leaf? trie)
-           (and (fx=? (iprefix key) (leaf-prefix trie))
-                (not (fxzero? (fxand (ibitmap key) (leaf-bitmap trie)))))
-           (let*-branch (((p m l r) trie))
-             (and (match-prefix? key p m)
-                  (if (zero-bit? key m)
-                      (trie-contains? l key)
-                      (trie-contains? r key)))))))
 
 (define (branching-bit-higher? mask1 mask2)
   (if (negative? (fxxor mask1 mask2))  ; signs differ
@@ -234,6 +488,108 @@
                       (trie-join p 0 lf q 0 t))))))))
       (ins trie))))
 
+;; Construct a trie which forms the intersection of the two tries.
+;; Runs in O(n+m) time.
+(define (trie-intersection trie1 trie2)
+  (letrec
+   ((intersect
+     (lambda (s t)
+       (cond ((or (not s) (not t)) #f)
+             ((leaf? s) (intersect/leaf s t))
+             ((leaf? t) (intersect/leaf t s))
+             (else (intersect-branches s t)))))
+    (intersect/leaf
+     (lambda (l t)
+       (let*-leaf (((p bm) l))
+         (let lp ((t t))
+           (cond ((not t) #f)
+                 ((leaf? t)
+                  (if (fx=? p (leaf-prefix t))
+                      (leaf p (fxand bm (leaf-bitmap t)))
+                      #f))          ; disjoint
+                 (else              ; branch
+                  (let*-branch (((q m l r) t))
+                    (if (match-prefix? p q m)
+                        (if (zero-bit? p m) (lp l) (lp r))
+                        #f))))))))  ; disjoint
+    (intersect-branches
+     (lambda (s t)
+       (let*-branch (((p m sl sr) s) ((q n tl tr) t))
+         (cond ((branching-bit-higher? m n)
+                (and (match-prefix? q p m)
+                     (if (zero-bit? q m)
+                         (intersect sl t)
+                         (intersect sr t))))
+               ((branching-bit-higher? n m)
+                (and (match-prefix? p q n)
+                     (if (zero-bit? p n)
+                         (intersect s tl)
+                         (intersect s tr))))
+               ((fx=? p q)
+                (branch p m (intersect sl tl) (intersect sr tr)))
+               (else #f))))))
+    (intersect trie1 trie2)))
+
+;; Construct a trie containing the elements of trie1 not found in trie2.
+;; Runs in O(n+m) time.
+(define (trie-difference trie1 trie2)
+  (letrec
+   ((difference
+     (lambda (s t)
+       (cond ((not s) #f)
+             ((not t) s)
+             ((leaf? s) (diff/leaf s t))
+             ((leaf? t)
+              (%trie-delete-bitmap s (leaf-prefix t) (leaf-bitmap t)))
+             (else (branch-difference s t)))))
+    (diff/leaf
+     (lambda (lf t)
+       (let*-leaf (((p bm) lf))
+         (let lp ((t t))
+           (cond ((not t) lf)
+                 ((leaf? t)
+                  (let*-leaf (((q c) t))
+                    (if (fx=? p q)
+                        (leaf p (fxand bm (fxnot c)))
+                        lf))) ; disjoint
+                 (else        ; branch
+                  (let*-branch (((q m l r) t))
+                    (if (match-prefix? p q m)
+                        (if (zero-bit? p m) (lp l) (lp r))
+                        lf))))))))
+    (branch-difference
+     (lambda (s t)
+       (let*-branch (((p m sl sr) s) ((q n tl tr) t))
+         (cond ((and (fx=? m n) (fx=? p q))
+                (branch p m (difference sl tl) (difference sr tr)))
+               ((and (branching-bit-higher? m n) (match-prefix? q p m))
+                (if (zero-bit? q m)
+                    (branch p m (difference sl t) sr)
+                    (branch p m sl (difference sr t))))
+               ((and (branching-bit-higher? n m) (match-prefix? p q n))
+                (if (zero-bit? p n)
+                    (difference s tl)
+                    (difference s tr)))
+               (else s))))))
+    (difference trie1 trie2)))
+
+;; Delete all values described by `bitmap' from `trie'.
+(define (%trie-delete-bitmap trie prefix bitmap)
+  (cond ((not trie) #f)
+        ((leaf? trie)
+         (if (fx=? prefix (leaf-prefix trie))
+             (leaf prefix (fxand (leaf-bitmap trie) (fxnot bitmap)))
+             trie))  ; disjoint
+        (else        ; branch
+         (let*-branch (((p m l r) trie))
+           (if (match-prefix? prefix p m)
+               (if (zero-bit? prefix m)
+                   (branch p m (%trie-delete-bitmap l prefix bitmap) r)
+                   (branch p m l (%trie-delete-bitmap r prefix bitmap)))
+               trie)))))
+
+;;;; Copying
+
 (define (copy-trie trie)
   (cond ((not trie) #f)
         ((leaf? trie) (raw-leaf (leaf-prefix trie) (leaf-bitmap trie)))
@@ -243,137 +599,14 @@
                      (copy-trie (branch-left trie))
                      (copy-trie (branch-right trie))))))
 
+;;;; Size
+
 (define (trie-size trie)
   (let accum ((siz 0) (t trie))
     (cond ((not t) siz)
           ((leaf? t) (+ siz (fxbit-count (leaf-bitmap t))))
           (else (accum (accum siz (branch-left t))
                        (branch-right t))))))
-
-;;;; Iteration
-
-;; Fold trie in increasing numerical order.
-(define (trie-fold proc nil trie)
-  (letrec
-   ((cata
-     (lambda (b t)
-       (cond ((not t) b)
-             ((leaf? t)
-              (fold-left-bits (leaf-prefix t) proc b (leaf-bitmap t)))
-             (else
-              (cata (cata b (branch-left t)) (branch-right t)))))))
-    (if (branch? trie)
-        (let*-branch (((p m l r) trie))
-          (if (fxnegative? m)
-              (cata (cata nil r) l)
-              (cata (cata nil l) r)))
-        (cata nil trie))))
-
-(define (fold-left-bits prefix proc nil bitmap)
-  (let loop ((bm bitmap) (acc nil))
-    (if (fxzero? bm)
-        acc
-        (let* ((mask (lowest-bit-mask bm))
-               (bi (fxfirst-set-bit mask)))
-          (loop (fxxor bm mask) (proc (fx+ prefix bi) acc))))))
-
-(define (trie-fold-right proc nil trie)
-  (letrec
-   ((cata
-     (lambda (b t)
-       (cond ((not t) b)
-             ((leaf? t)
-              (fold-right-bits (leaf-prefix t) proc b (leaf-bitmap t)))
-             (else
-              (cata (cata b (branch-right t)) (branch-left t)))))))
-    (if (branch? trie)
-        (let*-branch (((p m l r) trie))
-          (if (fxnegative? m)
-              (cata (cata nil l) r)
-              (cata (cata nil r) l)))
-        (cata nil trie))))
-
-;; This might benefit from tuning.
-(define (fold-right-bits prefix proc nil bitmap)
-  (let loop ((bm bitmap) (acc nil))
-    (if (fxzero? bm)
-        acc
-        (let* ((mask (highest-bit-mask bm (lowest-bit-mask bm)))
-               (bi (fxfirst-set-bit mask)))
-          (loop (fxxor bm mask) (proc (fx+ prefix bi) acc))))))
-
-(define (bitmap-partition pred prefix bitmap)
-  (let loop ((i 0) (in 0) (out 0))
-    (cond ((fx=? i leaf-bitmap-size) (values in out))
-          ((fxbit-set? i bitmap)
-           (let ((bit (fxarithmetic-shift 1 i)))
-             (if (pred (fx+ prefix i))
-                 (loop (fx+ i 1) (fxior in bit) out)
-                 (loop (fx+ i 1) in (fxior out bit)))))
-          (else (loop (fx+ i 1) in out)))))
-
-(define (trie-partition pred trie)
-  (letrec
-   ((part
-     (lambda (t)
-       (cond ((not t) (values #f #f))
-             ((leaf? t)
-              (let*-leaf (((p bm) t))
-                (let-values (((in out) (bitmap-partition pred p bm)))
-                  (values (leaf p in) (leaf p out)))))
-             (else
-              (let-values (((p) (branch-prefix t))
-                           ((m) (branch-branching-bit t))
-                           ((il ol) (part (branch-left t)))
-                           ((ir or) (part (branch-right t))))
-                (values (branch p m il ir) (branch p m ol or))))))))
-    (part trie)))
-
-(define (bitmap-filter pred prefix bitmap)
-  (let loop ((i 0) (res 0))
-    (cond ((fx=? i leaf-bitmap-size) res)
-          ((and (fxbit-set? i bitmap) (pred (fx+ prefix i)))
-           (loop (fx+ i 1) (fxior res (fxarithmetic-shift 1 i))))
-          (else (loop (fx+ i 1) res)))))
-
-(define (trie-filter pred trie)
-  (cond ((not trie) #f)
-        ((leaf? trie)
-         (let*-leaf (((p bm) trie))
-           (leaf p (bitmap-filter pred p bm))))
-        (else
-         (branch (branch-prefix trie)
-                 (branch-branching-bit trie)
-                 (trie-filter pred (branch-left trie))
-                 (trie-filter pred (branch-right trie))))))
-
-(define (trie-min trie)
-  (letrec
-   ((search
-     (lambda (t)
-       (and t
-            (if (leaf? t)
-                (fx+ (leaf-prefix t) (fxfirst-set-bit (leaf-bitmap t)))
-                (search (branch-left t)))))))
-    (if (branch? trie)
-        (if (fxnegative? (branch-branching-bit trie))
-            (search (branch-right trie))
-            (search (branch-left trie)))
-        (search trie))))
-
-(define (trie-max trie)
-  (letrec
-   ((search
-     (lambda (t)
-       (and t
-            (if (leaf? t)
-                (fx+ (leaf-prefix t) (highest-set-bit (leaf-bitmap t)))
-                (search (branch-right t)))))))
-    (if (branch? trie)
-        (if (fxnegative? (branch-branching-bit trie))
-            (search (branch-left trie))
-            (search (branch-right trie)))
-        (search trie))))
 
 ;;;; Comparisons
 
@@ -482,169 +715,7 @@
                (else #t))))))      ; the prefixes disagree
     (disjoint? trie1 trie2)))
 
-(define (trie-delete trie key)
-  (letrec*
-   ((prefix (iprefix key))
-    (update
-     (lambda (t)
-       (cond ((not t) #f)
-             ((leaf? t)
-              (let*-leaf (((p bm) t))
-                (if (fx=? p prefix)
-                    (leaf p (bitmap-delete bm key))
-                    t)))
-             (else
-              (let*-branch (((p m l r) t))
-                (if (match-prefix? prefix p m)
-                    (if (zero-bit? prefix m)
-                        (branch p m (update l) r)
-                        (branch p m l (update r)))
-                    t)))))))
-    (update trie)))
-
-(define (trie-delete-min trie)
-  (letrec
-   ((update/min
-     (lambda (t)
-       (cond ((not t) (error "Empty set"))
-             ((leaf? t)
-              (let*-leaf (((p bm) t))
-                (values (+ p (fxfirst-set-bit bm))
-                        (leaf p (bitmap-delete-min bm)))))
-             (else
-              (let*-branch (((p m l r) t))
-                (let-values (((n l*) (update/min l)))
-                  (values n (branch p m l* r)))))))))
-    (if (branch? trie)
-        (let*-branch (((p m l r) trie))
-          (if (fxnegative? m)
-              (let-values (((n r*) (update/min r)))
-                (values n (branch p m l r*)))
-              (let-values (((n l*) (update/min l)))
-                (values n (branch p m l* r)))))
-        (update/min trie))))
-
-(define (trie-delete-max trie)
-  (letrec
-   ((update/max
-     (lambda (t)
-       (cond ((not t) (error "Empty set"))
-             ((leaf? t)
-              (let*-leaf (((p bm) t))
-                (values (+ p (highest-set-bit bm))
-                        (leaf p (bitmap-delete-max bm)))))
-             (else
-              (let*-branch (((p m l r) t))
-                (let-values (((n r*) (update/max r)))
-                  (values n (branch p m l r*)))))))))
-    (if (branch? trie)
-        (let*-branch (((p m l r) trie))
-          (if (fxnegative? m)
-              (let-values (((n l*) (update/max l)))
-                (values n (branch p m l* r)))
-              (let-values (((n r*) (update/max r)))
-                (values n (branch p m l r*)))))
-        (update/max trie))))
-
-;; Construct a trie which forms the intersection of the two tries.
-;; Runs in O(n+m) time.
-(define (trie-intersection trie1 trie2)
-  (letrec
-   ((intersect
-     (lambda (s t)
-       (cond ((or (not s) (not t)) #f)
-             ((leaf? s) (intersect/leaf s t))
-             ((leaf? t) (intersect/leaf t s))
-             (else (intersect-branches s t)))))
-    (intersect/leaf
-     (lambda (l t)
-       (let*-leaf (((p bm) l))
-         (let lp ((t t))
-           (cond ((not t) #f)
-                 ((leaf? t)
-                  (if (fx=? p (leaf-prefix t))
-                      (leaf p (fxand bm (leaf-bitmap t)))
-                      #f))          ; disjoint
-                 (else              ; branch
-                  (let*-branch (((q m l r) t))
-                    (if (match-prefix? p q m)
-                        (if (zero-bit? p m) (lp l) (lp r))
-                        #f))))))))  ; disjoint
-    (intersect-branches
-     (lambda (s t)
-       (let*-branch (((p m sl sr) s) ((q n tl tr) t))
-         (cond ((branching-bit-higher? m n)
-                (and (match-prefix? q p m)
-                     (if (zero-bit? q m)
-                         (intersect sl t)
-                         (intersect sr t))))
-               ((branching-bit-higher? n m)
-                (and (match-prefix? p q n)
-                     (if (zero-bit? p n)
-                         (intersect s tl)
-                         (intersect s tr))))
-               ((fx=? p q)
-                (branch p m (intersect sl tl) (intersect sr tr)))
-               (else #f))))))
-    (intersect trie1 trie2)))
-
-;; Construct a trie containing the elements of trie1 not found in trie2.
-;; Runs in O(n+m) time.
-(define (trie-difference trie1 trie2)
-  (letrec
-   ((difference
-     (lambda (s t)
-       (cond ((not s) #f)
-             ((not t) s)
-             ((leaf? s) (diff/leaf s t))
-             ((leaf? t)
-              (%trie-delete-bitmap s (leaf-prefix t) (leaf-bitmap t)))
-             (else (branch-difference s t)))))
-    (diff/leaf
-     (lambda (lf t)
-       (let*-leaf (((p bm) lf))
-         (let lp ((t t))
-           (cond ((not t) lf)
-                 ((leaf? t)
-                  (let*-leaf (((q c) t))
-                    (if (fx=? p q)
-                        (leaf p (fxand bm (fxnot c)))
-                        lf))) ; disjoint
-                 (else        ; branch
-                  (let*-branch (((q m l r) t))
-                    (if (match-prefix? p q m)
-                        (if (zero-bit? p m) (lp l) (lp r))
-                        lf))))))))
-    (branch-difference
-     (lambda (s t)
-       (let*-branch (((p m sl sr) s) ((q n tl tr) t))
-         (cond ((and (fx=? m n) (fx=? p q))
-                (branch p m (difference sl tl) (difference sr tr)))
-               ((and (branching-bit-higher? m n) (match-prefix? q p m))
-                (if (zero-bit? q m)
-                    (branch p m (difference sl t) sr)
-                    (branch p m sl (difference sr t))))
-               ((and (branching-bit-higher? n m) (match-prefix? p q n))
-                (if (zero-bit? p n)
-                    (difference s tl)
-                    (difference s tr)))
-               (else s))))))
-    (difference trie1 trie2)))
-
-;; Delete all values described by `bitmap' from `trie'.
-(define (%trie-delete-bitmap trie prefix bitmap)
-  (cond ((not trie) #f)
-        ((leaf? trie)
-         (if (fx=? prefix (leaf-prefix trie))
-             (leaf prefix (fxand (leaf-bitmap trie) (fxnot bitmap)))
-             trie))  ; disjoint
-        (else        ; branch
-         (let*-branch (((p m l r) trie))
-           (if (match-prefix? prefix p m)
-               (if (zero-bit? prefix m)
-                   (branch p m (%trie-delete-bitmap l prefix bitmap) r)
-                   (branch p m l (%trie-delete-bitmap r prefix bitmap)))
-               trie)))))
+;;;; Subtrie operations
 
 ;; Return a trie containing all the elements of `trie' which are
 ;; less than k, if `inclusive' is false, or less than or equal to
@@ -732,12 +803,8 @@
        (cond ((not t) #f)
              ((leaf? t)
               (let*-leaf (((p bm) t))
-                (leaf p (bitmap-interval p
-                                         bm
-                                         a
-                                         b
-                                         low-inclusive
-                                         high-inclusive))))
+                (leaf p
+                      (bitmap-interval p bm a b low-inclusive high-inclusive))))
              (else (branch-interval t)))))
     (branch-interval
      (lambda (t)
@@ -761,8 +828,9 @@
               ((and (fxpositive? a) (fxpositive? b))
                (interval (branch-left trie)))
               ;; (a, 0) U (0, b)
-              (else (trie-union (subtrie> (branch-right trie) a low-inclusive)
-                                (subtrie< (branch-left trie) b high-inclusive))))
+              (else (trie-union
+                     (subtrie> (branch-right trie) a low-inclusive)
+                     (subtrie< (branch-left trie) b high-inclusive))))
         (interval trie))))
 
 ;; Return a bitmap containing the elements of bitmap that are within
@@ -785,49 +853,3 @@
                    (else (fxand low-mask bitmap))))
             ((fx>? prefix hp) 0)
             (else (fxand (fxand low-mask high-mask) bitmap))))))
-
-;; Search trie for key, and construct a new trie using the results of
-;; failure and success.
-(define (trie-search trie key failure success)
-  (let* ((kp (iprefix key))
-         (key-leaf (raw-leaf kp (ibitmap key))))
-    (let lp ((t trie) (build values))
-      (cond ((not t)
-             (failure (lambda (obj) (build key-leaf obj))
-                      (lambda (obj) (build #f obj))))
-            ((leaf? t)
-             (%leaf-search t key failure success build))
-            (else
-             (let*-branch (((p m l r) t))
-               (if (match-prefix? key p m)
-                   (if (zero-bit? key m)
-                       (lp l (lambda (l* obj)
-                               (build (branch p m l* r) obj)))
-                       (lp r (lambda (r* obj)
-                               (build (branch p m l r*) obj))))
-                   (failure (lambda (obj)
-                              (build (trie-join kp 0 key-leaf p m t)
-                                     obj))
-                            (lambda (obj) (build t obj))))))))))
-
-(define (%leaf-search lf key failure success build)
-  (let ((kp (iprefix key)) (kb (ibitmap key)))
-    (let*-leaf (((p bm) lf))
-      (if (fx=? kp p)
-          (if (fxzero? (fxand kb bm))
-              (failure (lambda (obj)
-                         (build (raw-leaf p (fxior kb bm)) obj))
-                       (lambda (obj) (build lf obj)))
-              (success key
-                       (lambda (elt obj)
-                         (assume (eqv? key elt) "invalid new element")
-                         (build lf obj))
-                       (lambda (obj)
-                         (build (leaf p (bitmap-delete bm key)) obj))))
-          (failure (lambda (obj)
-                     (build (trie-join kp 0 (raw-leaf kp kb) p 0 lf)
-                            obj))
-                   (lambda (obj) (build lf obj)))))))
-
-(define (bitmap-delete bitmap key)
-  (fxand bitmap (fxnot (ibitmap key))))
