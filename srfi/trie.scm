@@ -506,7 +506,7 @@
   (letrec
    ((update/min
      (lambda (t)
-       (cond ((not t) (values #f #f))
+       (cond ((not t) (error "Empty set"))
              ((leaf? t)
               (let*-leaf (((p bm) t))
                 (values (+ p (fxfirst-set-bit bm))
@@ -528,7 +528,7 @@
   (letrec
    ((update/max
      (lambda (t)
-       (cond ((not t) (values #f #f))
+       (cond ((not t) (error "Empty set"))
              ((leaf? t)
               (let*-leaf (((p bm) t))
                 (values (+ p (highest-set-bit bm))
