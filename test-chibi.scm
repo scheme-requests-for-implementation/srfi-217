@@ -51,10 +51,10 @@
   ;;; iset->list
 
   (test '() (iset->list (iset)))
-  (test '(0) (iset->list (iset 0)))
-  (test-assert (= (length (iset->list pos-set)) (iset-size pos-set)))
-  (test-assert (every (lambda (n) (iset-contains? pos-set n))
-                      (iset->list pos-set)))
+  (test pos-seq (iset->list pos-set))
+  (test neg-seq (iset->list neg-set))
+  (test mixed-seq (iset->list mixed-set))
+  (test sparse-seq (iset->list sparse-set))
 
   (test-equal iset=? (iset 1) (list->iset! (iset) '(1)))
   (test-equal iset=?
