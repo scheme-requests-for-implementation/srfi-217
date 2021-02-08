@@ -126,7 +126,7 @@ results may differ from that shown here.</p>
 </li><li><p><a href="#Accessors">Accessors</a>: <code>iset-member</code>, <code>iset-min</code>, <code>iset-max</code></p>
 </li><li><p><a href="#Updaters">Updaters</a>: <code>iset-adjoin</code>, <code>iset-adjoin!</code>, <code>iset-delete</code>, <code>iset-delete!</code>, <code>iset-delete-all</code>, <code>iset-delete-all!</code>, <code>iset-search</code>, <code>iset-search!</code></p>
 </li><li><p><a href="#Thewholeiset">The whole iset</a>: <code>iset-size</code>, <code>iset-find</code>, <code>iset-count</code>, <code>iset-any?</code>, <code>iset-every?</code></p>
-</li><li><p><a href="#Mappingandfolding">Mapping and folding</a>: <code>iset-map</code>, <code>iset-for-each</code>, <code>iset-fold</code>, <code>iset-filter</code>, <code>iset-filter!</code>, <code>iset-remove</code>, <code>iset-remove!</code>, <code>iset-partition</code>, <code>iset-partition!</code></p>
+</li><li><p><a href="#Mappingandfolding">Mapping and folding</a>: <code>iset-map</code>, <code>iset-for-each</code>, <code>iset-fold</code>, <code>iset-fold-right</code>, <code>iset-filter</code>, <code>iset-filter!</code>, <code>iset-remove</code>, <code>iset-remove!</code>, <code>iset-partition</code>, <code>iset-partition!</code></p>
 </li><li><p><a href="#Copyingandconversion">Copying and conversion</a>: <code>iset-copy</code>, <code>iset-&gt;list</code>, <code>list-&gt;iset</code>, <code>list-&gt;iset!</code></p>
 </li><li><p><a href="#Subsets">Subsets</a>: <code>iset=?</code>, <code>iset&lt;?</code>, <code>iset&gt;?</code>, <code>iset&lt;=?</code>, <code>iset&gt;=?</code></p>
 </li><li><p><a href="#Settheoryoperations">Set theory operations</a>: <code>iset-union</code>, <code>iset-intersection</code>, <code>iset-difference</code>, <code>iset-xor</code>, <code>iset-union!</code>, <code>iset-intersection!</code>, <code>iset-difference!</code>, <code>iset-xor!</code></p>
@@ -255,7 +255,7 @@ Returns the smallest or largest integer in <em>iset</em>, or <code>#f</code> if 
 
 <p><code>(iset-search </code><em>iset element failure success</em><code>)</code></p>
 
-<p>The <em>iset</em> is searched for <em>element</em>.  If it is not found, then the <em>failure</em> procedure is tail-called with two continuation arguments, <em>insert</em> and <em>ignore</em>, and is expected to tail-call one of them.  If <em>element</em> is found, then the <em>success</em> procedure is tail-called with the matching element of <em>iset</em> and two continuations, <em>update</em> and <em>remove</em>, and is expected to tail-call one of them.</p>
+<p>The <em>iset</em> is searched from lowest to highest value for <em>element</em>.  If it is not found, then the <em>failure</em> procedure is tail-called with two continuation arguments, <em>insert</em> and <em>ignore</em>, and is expected to tail-call one of them.  If <em>element</em> is found, then the <em>success</em> procedure is tail-called with the matching element of <em>iset</em> and two continuations, <em>update</em> and <em>remove</em>, and is expected to tail-call one of them.</p>
 
 <p>The effects of the continuations are as follows (where <em>obj</em> is any Scheme object):</p>
 
@@ -283,7 +283,7 @@ Returns the number of elements in <em>iset</em> as an exact integer.</p>
 
 <p><code>(iset-find </code><em>predicate iset failure</em><code>)</code></p><p>
 
-Returns an arbitrarily chosen element of <em>iset</em> that satisfies <em>predicate</em>, or the result of invoking <em>failure</em> with no arguments if there is none.
+Returns the smallest element of <em>iset</em> that satisfies <em>predicate</em>, or the result of invoking <em>failure</em> with no arguments if there is none.
 </p>
 
 <pre class="example"><code>(iset-find positive? (iset -1 1) (lambda () #f)) ⇒ 1
@@ -334,7 +334,7 @@ Returns <code>#t</code> if every element of <em>iset</em> satisfies <em>predicat
 
 <p><code>(iset-for-each </code><em>proc iset</em><code>)</code></p>
 
-<p>Applies <em>proc</em> to <em>iset</em> in arbitrary order, discarding the returned values.  Returns an unspecified result.</p>
+<p>Applies <em>proc</em> to <em>iset</em> in increasing numerical order, discarding the returned values.  Returns an unspecified result.</p>
 
 <pre class="example"><code>(let ((sum 0))
   (iset-for-each (lambda (x) (set! sum (+ sum x)))
@@ -343,9 +343,10 @@ Returns <code>#t</code> if every element of <em>iset</em> satisfies <em>predicat
  ⇒ 28
 </code></pre>
 
-<p><code>(iset-fold </code><em>proc nil iset</em><code>)</code></p>
+<p><code>(iset-fold </code><em>proc nil iset</em><code>)</code><br>
+<code>(iset-fold-right </code><em>proc nil iset</em><code>)</code></p>
 
-<p>Invokes <em>proc</em> on each member of <em>iset</em> in arbitrary order, passing the result of the previous invocation as a second argument.  For the first invocation, <em>nil</em> is used as the second argument.  Returns the result of the last invocation, or <em>nil</em> if there was no invocation.</p>
+<p>Invokes <em>proc</em> on each member of <em>iset</em> in increasing/decreasing numerical order, passing the result of the previous invocation as a second argument.  For the first invocation, <em>nil</em> is used as the second argument.  Returns the result of the last invocation, or <em>nil</em> if there was no invocation.</p>
 
 <pre class="example"><code>(iset-fold + 0 (iset 2 3 5 7 11)) ⇒ 28
 (iset-fold cons '() (iset 2 3 5 7 11)) ⇒ (2 3 5 7 11)  ; order may differ
@@ -397,7 +398,7 @@ Returns a newly allocated iset containing the elements of <em>iset</em>.
 
 </p><p><code>(iset-&gt;list </code><em>iset</em><code>)</code></p><p>
 
-Returns a newly allocated list containing the members of <em>iset</em> in unspecified order.</p>
+Returns a newly allocated list containing the members of <em>iset</em> in increasing numerical order.</p>
 
 <pre class="example"><code>(iset-&gt;list (iset 2 3 5 7 11)) ⇒ (2 3 5 7 11)
 </code></pre>
