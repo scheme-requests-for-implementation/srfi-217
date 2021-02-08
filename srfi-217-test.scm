@@ -245,51 +245,52 @@
   (test-assert
    (call-with-values
     (lambda ()
-      (iset-search (iset 2 3 4)
+      (iset-search mixed-set
                    1
                    (lambda (insert _) (insert #t))
                    (lambda (x update _) (update 1 #t))))
-    (lambda (set _) (iset=? (iset 1 2 3 4) set))))
+    (lambda (set _) (iset=? (iset-adjoin mixed-set 1) set))))
 
   ;; iset-search ignore
   (test-assert
    (call-with-values
     (lambda ()
-      (iset-search (iset 2 3 4)
+      (iset-search mixed-set
                    1
                    (lambda (_ ignore) (ignore #t))
                    (lambda (x _ remove) (remove #t))))
-    (lambda (set _) (iset=? (iset 2 3 4) set))))
+    (lambda (set _) (iset=? mixed-set set))))
 
   ;; iset-search update with same element.
   (test-assert
    (call-with-values
     (lambda ()
-      (iset-search (iset 2 3 4)
-                   3
+      (iset-search mixed-set
+                   2
                    (lambda (insert _) (insert #t))
-                   (lambda (x update _) (update 3 #t))))
-    (lambda (set _) (iset=? (iset 2 3 4) set))))
+                   (lambda (x update _) (update 2 #t))))
+    (lambda (set _) (iset=? mixed-set set))))
 
   ;; iset-search update with different element.
   (test-assert
    (call-with-values
     (lambda ()
-      (iset-search (iset 2 3 4)
-                   3
+      (iset-search mixed-set
+                   2
                    (lambda (insert _) (insert #t))
-                   (lambda (x update _) (update 5 #t))))
-    (lambda (set _) (iset=? (iset 2 4 5) set))))
+                   (lambda (x update _) (update 3 #t))))
+    (lambda (set _)
+      (iset=? (iset-adjoin (iset-delete mixed-set 2) 3) set))))
 
   ;; iset-search remove
   (test-assert
    (call-with-values
     (lambda ()
-      (iset-search (iset 2 3 4)
-                   3
+      (iset-search mixed-set
+                   2
                    (lambda (_ ignore) (ignore #t))
                    (lambda (x _ remove) (remove #t))))
-    (lambda (set _) (iset=? (iset 2 4) set))))
+    (lambda (set _) (iset=? (iset-delete mixed-set 2) set))))
 
   ;;; iset-delete-min / -max
 
