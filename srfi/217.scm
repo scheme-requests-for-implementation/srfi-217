@@ -280,11 +280,7 @@
 (define (iset-fold proc nil set)
   (assume (procedure? proc))
   (assume (iset? set))
-  (let ((trie (iset-trie set)))
-    (if (and (branch? trie) (positive? (branch-branching-bit trie)))
-        (trie-fold proc (trie-fold proc nil (branch-right trie))
-                        (branch-left trie))
-        (trie-fold proc nil trie))))
+  (trie-fold proc nil (iset-trie set)))
 
 (define (iset-fold-right proc nil set)
   (assume (procedure? proc))

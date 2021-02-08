@@ -252,7 +252,7 @@
 
 ;;;; Iteration
 
-;; Left branches are processed before right.
+;; Fold trie in increasing numerical order.
 (define (trie-fold proc nil trie)
   (letrec
    ((cata
@@ -262,7 +262,12 @@
               (fold-left-bits (leaf-prefix t) proc b (leaf-bitmap t)))
              (else
               (cata (cata b (branch-left t)) (branch-right t)))))))
-    (cata nil trie)))
+    (if (branch? trie)
+        (let*-branch (((p m l r) trie))
+          (if (fxnegative? m)
+              (cata (cata nil r) l)
+              (cata (cata nil l) r)))
+        (cata nil trie))))
 
 (define (fold-left-bits prefix proc nil bitmap)
   (let loop ((bm bitmap) (acc nil))

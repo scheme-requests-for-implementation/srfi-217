@@ -233,10 +233,13 @@
   )
 
 (test-group "Iterators"
-  ;; folds
+  ;;; folds
+
   (test (fold + 0 pos-seq) (iset-fold + 0 pos-set))
   (test (fold + 0 sparse-seq) (iset-fold + 0 sparse-set))
   (test (iset-size neg-set) (iset-fold (lambda (_ c) (+ c 1)) 0 neg-set))
+  (test (reverse pos-seq) (iset-fold cons '() pos-set))
+  (test (reverse mixed-seq) (iset-fold cons '() mixed-set))
 
   (test (fold + 0 pos-seq) (iset-fold-right + 0 pos-set))
   (test (fold + 0 sparse-seq) (iset-fold-right + 0 sparse-set))
