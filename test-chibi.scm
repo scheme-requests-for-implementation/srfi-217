@@ -187,7 +187,6 @@
 
   ;;; iset-delete-min / -max
 
-  (test-values (values #f (iset)) (iset-delete-min (iset)))
   (test-values (values #t #t)
                (let-values (((n mixed-set*) (iset-delete-min mixed-set)))
                  (values (= n (car mixed-seq))
@@ -197,7 +196,6 @@
                  (values (= n (car sparse-seq))
                          (iset=? sparse-set* (list->iset (cdr sparse-seq))))))
 
-  (test-values (values #f (iset)) (iset-delete-max (iset)))
   (test-values (values #t #t)
                (let-values (((n mixed-set*) (iset-delete-max mixed-set)))
                  (values (= n (last mixed-seq))
