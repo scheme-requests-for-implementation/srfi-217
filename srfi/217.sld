@@ -29,6 +29,7 @@
           iset-delete-min iset-delete-max
           iset-delete-min! iset-delete-max!
           iset-size
+          iset-find
           iset-any? iset-every?
           iset-count iset-fold
           iset-fold-right

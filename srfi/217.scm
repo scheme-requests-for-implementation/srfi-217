@@ -229,6 +229,16 @@
   (assume (iset? set))
   (trie-size (iset-trie set)))
 
+(define (iset-find pred set failure)
+  (assume (procedure? failure))
+  (call-with-current-continuation
+   (lambda (return)
+     (or (iset-fold (lambda (n _)
+                      (and (pred n) (return n)))
+                    #f
+                    set)
+         (failure)))))
+
 (define (iset-count pred set)
   (assume (procedure? pred))
   (iset-fold (lambda (n acc)

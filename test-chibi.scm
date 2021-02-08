@@ -214,6 +214,9 @@
   (test (length mixed-seq) (iset-size mixed-set))
   (test (length sparse-seq) (iset-size sparse-set))
 
+  (test 8 (iset-find even? (iset 1 3 5 7 8 9 10) (lambda () #f)))
+  (test 'z (iset-find negative? pos-set (lambda () 'z)))
+
   (test #f (iset-any? even? (iset)))
   (test-assert (iset-any? even? pos-set))
   (test-not (iset-any? negative? pos-set))

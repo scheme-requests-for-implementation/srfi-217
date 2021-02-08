@@ -13,6 +13,7 @@
    iset-search
    iset-search!
    iset-size
+   iset-find
    iset-any? iset-every?
    iset-count iset-fold
    iset-fold-right
