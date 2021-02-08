@@ -19,6 +19,10 @@
 ;;; Throughout this code, the empty trie (#f) is always returned
 ;;; as an explicit value, not, e.g. as the default value of an
 ;;; (and ...) expression, to clarify its use as a trie value.
+;;;
+;;; The interface procedures of this library are the `trie-' forms
+;;; not prefixed with '%'.  This flimsy naming scheme is no substitute
+;;; for a real submodule, but not every Scheme supports those.
 
 ;;;; Types and constructors
 
@@ -189,14 +193,14 @@
               (let*-leaf (((p b) t))
                 (if (fx=? prefix p)
                     (raw-leaf prefix (fxior b bitmap))
-                    (trie-join prefix 0 (raw-leaf prefix bitmap) p 0 t))))
+                    (%trie-join prefix 0 (raw-leaf prefix bitmap) p 0 t))))
              (else
               (let*-branch (((p m l r) t))
                 (if (match-prefix? prefix p m)
                     (if (zero-bit? prefix m)
                         (branch p m (ins l) r)
                         (branch p m l (ins r)))
-                    (trie-join prefix 0 (raw-leaf prefix bitmap) p m t))))))))
+                    (%trie-join prefix 0 (raw-leaf prefix bitmap) p m t))))))))
     (ins trie)))
 
 (define (trie-insert trie key)
@@ -376,7 +380,7 @@
              (failure (lambda (obj) (build key-leaf obj))
                       (lambda (obj) (build #f obj))))
             ((leaf? t)
-             (%leaf-search t key failure success build))
+             (leaf-search t key failure success build))
             (else
              (let*-branch (((p m l r) t))
                (if (match-prefix? key p m)
@@ -386,11 +390,11 @@
                        (lp r (lambda (r* obj)
                                (build (branch p m l r*) obj))))
                    (failure (lambda (obj)
-                              (build (trie-join kp 0 key-leaf p m t)
+                              (build (%trie-join kp 0 key-leaf p m t)
                                      obj))
                             (lambda (obj) (build t obj))))))))))
 
-(define (%leaf-search lf key failure success build)
+(define (leaf-search lf key failure success build)
   (let ((kp (iprefix key)) (kb (ibitmap key)))
     (let*-leaf (((p bm) lf))
       (if (fx=? kp p)
@@ -405,13 +409,13 @@
                        (lambda (obj)
                          (build (leaf p (bitmap-delete bm key)) obj))))
           (failure (lambda (obj)
-                     (build (trie-join kp 0 (raw-leaf kp kb) p 0 lf)
+                     (build (%trie-join kp 0 (raw-leaf kp kb) p 0 lf)
                             obj))
                    (lambda (obj) (build lf obj)))))))
 
 ;;;; Set-theoretical operations
 
-(define (trie-join prefix1 mask1 trie1 prefix2 mask2 trie2)
+(define (%trie-join prefix1 mask1 trie1 prefix2 mask2 trie2)
   (let ((m (branching-bit prefix1 mask1 prefix2 mask2)))
     (if (zero-bit? prefix1 m)
         (raw-branch (mask prefix1 m) m trie1 trie2)
@@ -426,7 +430,7 @@
 ;; `insert-leaf' function, which is used to merge leaves into branches.
 ;; Taking the running time of `insert-leaf' to be constant, runs in
 ;; O(n+m) time.
-(define (trie-merge insert-leaf trie1 trie2)
+(define (%trie-merge insert-leaf trie1 trie2)
   (letrec
     ((merge
       (lambda (s t)
@@ -453,22 +457,22 @@
                      (branch q n (merge s t1) t2)
                      (branch q n t1 (merge s t2))))
                 (else    ; the prefixes disagree
-                 (trie-join p m s q n t)))))))
+                 (%trie-join p m s q n t)))))))
     (merge trie1 trie2)))
 
 (define (trie-union trie1 trie2)
-  (trie-merge (lambda (s t) (%insert-leaf/proc fxior s t))
-              trie1
-              trie2))
+  (%trie-merge (lambda (s t) (insert-leaf/proc fxior s t))
+               trie1
+               trie2))
 
 (define (trie-xor trie1 trie2)
-  (trie-merge (lambda (s t) (%insert-leaf/proc fxxor s t))
-              trie1
-              trie2))
+  (%trie-merge (lambda (s t) (insert-leaf/proc fxxor s t))
+               trie1
+               trie2))
 
 ;; Insert the elements of `lf' into `trie', combining bitmaps with
 ;; the binary bitwise operation `fxcombine'.
-(define (%insert-leaf/proc fxcombine trie lf)
+(define (insert-leaf/proc fxcombine trie lf)
   (let*-leaf (((p bm) lf))
     (letrec
      ((ins
@@ -478,14 +482,14 @@
                 (let*-leaf (((q bm*) t))
                   (if (fx=? p q)
                       (leaf p (fxcombine bm bm*))
-                      (trie-join p 0 lf q 0 t))))
+                      (%trie-join p 0 lf q 0 t))))
                (else         ; branch
                 (let*-branch (((q m l r) t))
                   (if (match-prefix? p q m)
                       (if (zero-bit? p m)
                           (raw-branch q m (ins l) r)
                           (raw-branch q m l (ins r)))
-                      (trie-join p 0 lf q 0 t))))))))
+                      (%trie-join p 0 lf q 0 t))))))))
       (ins trie))))
 
 ;; Construct a trie which forms the intersection of the two tries.
