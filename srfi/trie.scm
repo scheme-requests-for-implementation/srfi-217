@@ -347,17 +347,33 @@
                  (trie-filter pred (branch-left trie))
                  (trie-filter pred (branch-right trie))))))
 
-(define (%trie-find-least trie)
-  (and trie
-       (if (leaf? trie)
-           (fx+ (leaf-prefix trie) (fxfirst-set-bit (leaf-bitmap trie)))
-           (%trie-find-least (branch-left trie)))))
+(define (trie-min trie)
+  (letrec
+   ((search
+     (lambda (t)
+       (and t
+            (if (leaf? t)
+                (fx+ (leaf-prefix t) (fxfirst-set-bit (leaf-bitmap t)))
+                (search (branch-left t)))))))
+    (if (branch? trie)
+        (if (fxnegative? (branch-branching-bit trie))
+            (search (branch-right trie))
+            (search (branch-left trie)))
+        (search trie))))
 
-(define (%trie-find-greatest trie)
-  (and trie
-       (if (leaf? trie)
-           (fx+ (leaf-prefix trie) (highest-set-bit (leaf-bitmap trie)))
-           (%trie-find-greatest (branch-right trie)))))
+(define (trie-max trie)
+  (letrec
+   ((search
+     (lambda (t)
+       (and t
+            (if (leaf? t)
+                (fx+ (leaf-prefix t) (highest-set-bit (leaf-bitmap t)))
+                (search (branch-right t)))))))
+    (if (branch? trie)
+        (if (fxnegative? (branch-branching-bit trie))
+            (search (branch-left trie))
+            (search (branch-right trie)))
+        (search trie))))
 
 ;;;; Comparisons
 
