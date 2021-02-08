@@ -515,7 +515,14 @@
               (let*-branch (((p m l r) t))
                 (let-values (((n l*) (update/min l)))
                   (values n (branch p m l* r)))))))))
-    (update/min trie)))
+    (if (branch? trie)
+        (let*-branch (((p m l r) trie))
+          (if (fxnegative? m)
+              (let-values (((n r*) (update/min r)))
+                (values n (branch p m l r*)))
+              (let-values (((n l*) (update/min l)))
+                (values n (branch p m l* r)))))
+        (update/min trie))))
 
 (define (trie-delete-max trie)
   (letrec
@@ -530,7 +537,14 @@
               (let*-branch (((p m l r) t))
                 (let-values (((n r*) (update/max r)))
                   (values n (branch p m l r*)))))))))
-    (update/max trie)))
+    (if (branch? trie)
+        (let*-branch (((p m l r) trie))
+          (if (fxnegative? m)
+              (let-values (((n l*) (update/max l)))
+                (values n (branch p m l* r)))
+              (let-values (((n r*) (update/max r)))
+                (values n (branch p m l r*)))))
+        (update/max trie))))
 
 ;; Construct a trie which forms the intersection of the two tries.
 ;; Runs in O(n+m) time.
