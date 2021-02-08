@@ -31,6 +31,7 @@
           iset-size
           iset-any? iset-every?
           iset-count iset-fold
+          iset-fold-right
           iset-map iset-for-each
           iset-filter iset-remove
           iset-partition iset-partition!
@@ -48,6 +49,8 @@
           ;; debug
           iset-trie
           highest-set-bit
+          highest-bit-mask
+          lowest-bit-mask
           )
 
   (include "trie.scm")

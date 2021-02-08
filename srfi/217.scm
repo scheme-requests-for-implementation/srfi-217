@@ -286,6 +286,11 @@
                         (branch-left trie))
         (trie-fold proc nil trie))))
 
+(define (iset-fold-right proc nil set)
+  (assume (procedure? proc))
+  (assume (iset? set))
+  (trie-fold-right proc nil (iset-trie set)))
+
 (define (iset-filter pred set)
   (assume (procedure? pred))
   (assume (iset? set))

@@ -343,9 +343,17 @@
 (define (check-iterators)
   (print-header "Iterators")
 
+  ;; folds
+
   (test (fold + 0 pos-seq) (iset-fold + 0 pos-set))
   (test (fold + 0 sparse-seq) (iset-fold + 0 sparse-set))
   (test (iset-size neg-set) (iset-fold (lambda (_ c) (+ c 1)) 0 neg-set))
+
+  (test (fold + 0 pos-seq) (iset-fold-right + 0 pos-set))
+  (test (fold + 0 sparse-seq) (iset-fold-right + 0 sparse-set))
+  (test (iset-size neg-set) (iset-fold-right (lambda (_ c) (+ c 1)) 0 neg-set))
+  (test pos-seq (iset-fold-right cons '() pos-set))
+  (test mixed-seq (iset-fold-right cons '() mixed-set))
 
   ;;; iset-map
 

@@ -272,6 +272,31 @@
                (bi (fxfirst-set-bit mask)))
           (loop (fxxor bm mask) (proc (fx+ prefix bi) acc))))))
 
+(define (trie-fold-right proc nil trie)
+  (letrec
+   ((cata
+     (lambda (b t)
+       (cond ((not t) b)
+             ((leaf? t)
+              (fold-right-bits (leaf-prefix t) proc b (leaf-bitmap t)))
+             (else
+              (cata (cata b (branch-right t)) (branch-left t)))))))
+    (if (branch? trie)
+        (let*-branch (((p m l r) trie))
+          (if (fxnegative? m)
+              (cata (cata nil l) r)
+              (cata (cata nil r) l)))
+        (cata nil trie))))
+
+;; This might benefit from tuning.
+(define (fold-right-bits prefix proc nil bitmap)
+  (let loop ((bm bitmap) (acc nil))
+    (if (fxzero? bm)
+        acc
+        (let* ((mask (highest-bit-mask bm (lowest-bit-mask bm)))
+               (bi (fxfirst-set-bit mask)))
+          (loop (fxxor bm mask) (proc (fx+ prefix bi) acc))))))
+
 (define (bitmap-partition pred prefix bitmap)
   (let loop ((i 0) (in 0) (out 0))
     (cond ((fx=? i leaf-bitmap-size) (values in out))
