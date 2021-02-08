@@ -112,13 +112,6 @@ and may be provided in a future SRFI.</p>
 
 <p>Note that if an implementation uses no side effects at all, it is allowed to return existing isets rather than newly allocated ones, even where this SRFI explicitly says otherwise.</p>
 
-<h3>Note on examples</h3>
-
-<p>Since this SRFI does not specify an external representation for integer
-sets, many examples of procedure usage in this document use
-<code>iset->list</code> to show results as lists.  The order of these
-results may differ from that shown here.</p>
-
 <h3 id="Index">Index</h3>
 
 <ul><li><p><a href="#Constructors">Constructors</a>: <code>iset</code>, <code>iset-unfold</code>, <code>make-range-iset</code></p>
@@ -349,7 +342,7 @@ Returns <code>#t</code> if every element of <em>iset</em> satisfies <em>predicat
 <p>Invokes <em>proc</em> on each member of <em>iset</em> in increasing/decreasing numerical order, passing the result of the previous invocation as a second argument.  For the first invocation, <em>nil</em> is used as the second argument.  Returns the result of the last invocation, or <em>nil</em> if there was no invocation.</p>
 
 <pre class="example"><code>(iset-fold + 0 (iset 2 3 5 7 11)) ⇒ 28
-(iset-fold cons '() (iset 2 3 5 7 11)) ⇒ (2 3 5 7 11)  ; order may differ
+(iset-fold cons '() (iset 2 3 5 7 11)) ⇒ (11 7 5 3 2)
 </code></pre>
 
 <p><code>(iset-filter </code><em>predicate iset</em><code>)</code></p>
