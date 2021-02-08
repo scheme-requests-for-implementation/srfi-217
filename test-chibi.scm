@@ -269,6 +269,10 @@
         (let ((sum 0))
           (iset-for-each (lambda (n) (set! sum (+ sum n))) sparse-set)
           sum))
+  (test (reverse mixed-seq)
+        (let ((xs '()))
+          (iset-for-each (lambda (n) (set! xs (cons n xs))) mixed-set)
+          xs))
 
   ;;; filter, remove, & partition
 
