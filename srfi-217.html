@@ -139,7 +139,7 @@ and may be provided in a future SRFI.</p>
 (iset-&gt;list (iset)) ⇒ ()
 </code></pre>
 
-<p><code>(iset-unfold </code><em>stop? mapper successor seed</em><code>)</code></p>
+<p><code>(iset-unfold </code><em>stop?</em> <em>mapper</em> <em>successor</em> <em>seed</em><code>)</code></p>
 
 <p>Create a newly allocated iset as if by <code>iset</code>.  If the result of applying the predicate <em>stop?</em> to <em>seed</em> is true, return the iset.  Otherwise, apply the procedure <em>mapper</em> to <em>seed</em>.  The value that <em>mapper</em> returns is added to the iset.  Then get a new seed by applying the procedure <em>successor</em> to <em>seed</em>, and repeat this algorithm.</p>
 <pre class="example"><code>(iset-&gt;list (iset-unfold (lambda (n) (> n 64))
@@ -188,7 +188,7 @@ containing the sequence</p>
 (iset-empty? (iset)) ⇒ #t
 </code></pre>
 
-<p><code>(iset-disjoint? </code><em>iset<sub>1</sub> iset<sub>2</sub></em><code>)</code></p>
+<p><code>(iset-disjoint? </code><em>iset<sub>1</sub></em> <em>iset<sub>2</sub></em><code>)</code></p>
 
 <p>Returns <code>#t</code> if <em>iset<sub>1</sub></em> and <em>iset<sub>2</sub></em> have no elements in common and <code>#f</code> otherwise.</p>
 
@@ -198,7 +198,7 @@ containing the sequence</p>
 
 <h3 id="Accessors">Accessors</h3>
 
-<p><code>(iset-member </code><em>iset element default</em><code>)</code></p>
+<p><code>(iset-member </code><em>iset</em> <em>element</em> <em>default</em><code>)</code></p>
 
 <p>Returns the element of <em>iset</em> that is equal, in the sense of <em>iset's</em> equality predicate, to <em>element</em>.  If <em>element</em> is not a member of <em>iset</em>, <em>default</em> is returned.</p>
 
@@ -218,24 +218,24 @@ Returns the smallest or largest integer in <em>iset</em>, or <code>#f</code> if 
 
 <h3 id="Updaters">Updaters</h3>
 
-<p><code>(iset-adjoin </code><em>iset element<sub>1</sub> element<sub>2</sub></em> ...<code>)</code></p>
+<p><code>(iset-adjoin </code><em>iset</em> <em>element<sub>1</sub></em> <em>element<sub>2</sub></em> ...<code>)</code></p>
 
 <p>The <code>iset-adjoin</code> procedure returns a newly allocated iset that contains all the values of <em>iset</em>, and in addition each <em>element</em> unless it is already equal to one of the existing or newly added members.</p>
 
 <pre class="example"><code>(iset-&gt;list (iset-adjoin (iset 1 3 5) 0)) ⇒ (0 1 3 5)
 </code></pre>
 
-<p><code>(iset-adjoin! </code><em>iset element<sub>1</sub> element<sub>2</sub></em> ...<code>)</code></p>
+<p><code>(iset-adjoin! </code><em>iset</em> <em>element<sub>1</sub></em> <em>element<sub>2</sub></em> ...<code>)</code></p>
 
 <p>The <code>iset-adjoin!</code> procedure is the same as <code>iset-adjoin</code>, except that it is permitted to mutate and return the <em>iset</em> argument rather than allocating a new iset.</p>
 
-<p><code>(iset-delete </code><em>iset element<sub>1</sub> element<sub>2</sub></em> ...<code>)</code></p>
+<p><code>(iset-delete </code><em>iset</em> <em>element<sub>1</sub></em> <em>element<sub>2</sub></em> ...<code>)</code></p>
 
-<p><code>(iset-delete! </code><em>iset element<sub>1</sub> element<sub>2</sub></em> ...<code>)</code></p>
+<p><code>(iset-delete! </code><em>iset</em> <em>element<sub>1</sub></em> <em>element<sub>2</sub></em> ...<code>)</code></p>
 
-<p><code>(iset-delete-all </code><em>iset element-list</em><code>)</code></p>
+<p><code>(iset-delete-all </code><em>iset</em> <em>element-list</em><code>)</code></p>
 
-<p><code>(iset-delete-all! </code><em>iset element-list</em><code>)</code></p>
+<p><code>(iset-delete-all! </code><em>iset</em> <em>element-list</em><code>)</code></p>
 
 <p>The <code>iset-delete</code> procedure returns a newly allocated iset containing all the values of <em>iset</em> except for any that are equal to one or more of the <em>elements</em>.  Any <em>element</em> that is not equal to some member of the iset is ignored.</p>
 
@@ -269,22 +269,22 @@ of allocating a new iset.</p>
   ⇒ (11 (2 3 5 7))
 </code></pre>
 
-<p><code>(iset-search </code><em>iset element failure success</em><code>)</code></p>
+<p><code>(iset-search </code><em>iset</em> <em>element</em> <em>failure</em> <em>success</em><code>)</code></p>
 
 <p>The <em>iset</em> is searched from lowest to highest value for <em>element</em>.  If it is not found, then the <em>failure</em> procedure is tail-called with two continuation arguments, <em>insert</em> and <em>ignore</em>, and is expected to tail-call one of them.  If <em>element</em> is found, then the <em>success</em> procedure is tail-called with the matching element of <em>iset</em> and two continuations, <em>update</em> and <em>remove</em>, and is expected to tail-call one of them.</p>
 
 <p>The effects of the continuations are as follows (where <em>obj</em> is any Scheme object):</p>
 
 <ul>
-<li><p>Invoking <code>(</code><em>insert obj</em><code>)</code> causes <em>element</em> to be inserted into <em>iset</em>.</p></li>
-<li><p>Invoking <code>(</code><em>ignore obj</em><code>)</code> causes <em>iset</em> to remain unchanged.</p></li>
-<li><p>Invoking <code>(</code><em>update new-element obj</em><code>)</code> causes <em>new-element</em> to be inserted into <em>iset</em> in place of <i>element</i>.</p></li>
-<li><p>Invoking <code>(</code><em>remove obj</em><code>)</code> causes the matching element of <em>iset</em> to be removed from it.</p></li>
+<li><p>Invoking <code>(</code><em>insert</em> <em>obj</em><code>)</code> causes <em>element</em> to be inserted into <em>iset</em>.</p></li>
+<li><p>Invoking <code>(</code><em>ignore</em> <em>obj</em><code>)</code> causes <em>iset</em> to remain unchanged.</p></li>
+<li><p>Invoking <code>(</code><em>update</em> <em>new-element</em> <em>obj</em><code>)</code> causes <em>new-element</em> to be inserted into <em>iset</em> in place of <i>element</i>.</p></li>
+<li><p>Invoking <code>(</code><em>remove</em> <em>obj</em><code>)</code> causes the matching element of <em>iset</em> to be removed from it.</p></li>
 </ul>
 
 <p>In all cases, two values are returned: a newly allocated iset and <em>obj</em>.</p>
 
-<p><code>(iset-search! </code><em>iset element failure success</em><code>)</code></p>
+<p><code>(iset-search! </code><em>iset</em> <em>element</em> <em>failure</em> <em>success</em><code>)</code></p>
 
 <p>The <code>iset-search!</code> procedure is the same as <code>iset-search</code>,
 except that it is permitted to mutate and return the <em>iset</em> argument rather
@@ -297,7 +297,7 @@ Returns the number of elements in <em>iset</em> as an exact integer.</p>
 <pre class="example"><code>(iset-size (iset 1 3 5)) ⇒ 3
 </code></pre>
 
-<p><code>(iset-find </code><em>predicate iset failure</em><code>)</code></p><p>
+<p><code>(iset-find </code><em>predicate</em> <em>iset</em> <em>failure</em><code>)</code></p><p>
 
 Returns the smallest element of <em>iset</em> that satisfies <em>predicate</em>, or the result of invoking <em>failure</em> with no arguments if there is none.
 </p>
@@ -306,14 +306,14 @@ Returns the smallest element of <em>iset</em> that satisfies <em>predicate</em>,
 (iset-find zero? (iset -1 1) (lambda () #f)) ⇒ #f
 </code></pre>
 
-<p><code>(iset-count </code><em>predicate iset</em><code>)</code></p><p>
+<p><code>(iset-count </code><em>predicate</em> <em>iset</em><code>)</code></p><p>
 
 Returns the number of elements of <em>iset</em> that satisfy <em>predicate</em> as an exact integer.</p>
 
 <pre class="example"><code>(iset-count positive? (iset -2 -1 1 2)) ⇒ 2
 </code></pre>
 
-<p><code>(iset-any? </code><em>predicate iset</em><code>)</code></p><p>
+<p><code>(iset-any? </code><em>predicate</em> <em>iset</em><code>)</code></p><p>
 
 Returns <code>#t</code> if any element of <em>iset</em> satisfies <em>predicate</em>, or <code>#f</code> otherwise.  Note that this differs from the SRFI 1 analogue because it does not return an element of the iset.</p>
 
@@ -321,7 +321,7 @@ Returns <code>#t</code> if any element of <em>iset</em> satisfies <em>predicate<
 (iset-any? zero? (iset -2 -1 1 2)) ⇒ #f
 </code></pre>
 
-<p><code>(iset-every? </code><em>predicate iset</em><code>)</code></p><p>
+<p><code>(iset-every? </code><em>predicate</em> <em>iset</em><code>)</code></p><p>
 
 Returns <code>#t</code> if every element of <em>iset</em> satisfies <em>predicate</em>, or <code>#f</code> otherwise.  Note that this differs from the SRFI 1 analogue because it does not return an element of the iset.
 
@@ -333,7 +333,7 @@ Returns <code>#t</code> if every element of <em>iset</em> satisfies <em>predicat
 
 <h3 id="Mappingandfolding">Mapping and folding</h3>
 
-<p><code>(iset-map </code><em>proc iset</em><code>)</code></p>
+<p><code>(iset-map </code><em>proc</em> <em>iset</em><code>)</code></p>
 
 <p>Applies <em>proc</em> to each element of <em>iset</em> in arbitrary order and returns a newly allocated iset, created as if by <code>iset</code>, which contains the results of the applications.  It is an error if <em>proc</em> returns a value that is not an exact integer.</p>
 
@@ -348,7 +348,7 @@ Returns <code>#t</code> if every element of <em>iset</em> satisfies <em>predicat
  => (iset 0 1 2)
 </pre>
 
-<p><code>(iset-for-each </code><em>proc iset</em><code>)</code></p>
+<p><code>(iset-for-each </code><em>proc</em> <em>iset</em><code>)</code></p>
 
 <p>Applies <em>proc</em> to <em>iset</em> in increasing numerical order, discarding the returned values.  Returns an unspecified result.</p>
 
@@ -359,8 +359,8 @@ Returns <code>#t</code> if every element of <em>iset</em> satisfies <em>predicat
  ⇒ 28
 </code></pre>
 
-<p><code>(iset-fold </code><em>proc nil iset</em><code>)</code><br>
-<code>(iset-fold-right </code><em>proc nil iset</em><code>)</code></p>
+<p><code>(iset-fold </code><em>proc</em> <em>nil</em> <em>iset</em><code>)</code><br>
+<code>(iset-fold-right </code><em>proc</em> <em>nil</em> <em>iset</em><code>)</code></p>
 
 <p>Invokes <em>proc</em> on each member of <em>iset</em> in increasing/decreasing numerical order, passing the result of the previous invocation as a second argument.  For the first invocation, <em>nil</em> is used as the second argument.  Returns the result of the last invocation, or <em>nil</em> if there was no invocation.</p>
 
@@ -369,7 +369,7 @@ Returns <code>#t</code> if every element of <em>iset</em> satisfies <em>predicat
 (iset-fold-right cons '() (iset 2 3 5 7 11)) ⇒ (2 3 5 7 11)
 </code></pre>
 
-<p><code>(iset-filter </code><em>predicate iset</em><code>)</code></p>
+<p><code>(iset-filter </code><em>predicate</em> <em>iset</em><code>)</code></p>
 
 <p>Returns a newly allocated iset containing just the elements of <em>iset</em> that satisfy <em>predicate</em>.</p>
 
@@ -377,11 +377,11 @@ Returns <code>#t</code> if every element of <em>iset</em> satisfies <em>predicat
  ⇒ (2 3 5)
 </code></pre>
 
-<p><code>(iset-filter! </code><em>predicate iset</em><code>)</code></p>
+<p><code>(iset-filter! </code><em>predicate</em> <em>iset</em><code>)</code></p>
 
 <p>A linear update procedure that returns a iset containing just the elements of <em>iset</em> that satisfy <em>predicate</em>.</p>
 
-<p><code>(iset-remove </code><em>predicate iset</em><code>)</code></p>
+<p><code>(iset-remove</em> <em></code><em>predicate iset</em><code>)</code></p>
 
 <p>Returns a newly allocated iset containing just the elements of <em>iset</em> that do not satisfy <em>predicate</em>.</p>
 
@@ -389,11 +389,11 @@ Returns <code>#t</code> if every element of <em>iset</em> satisfies <em>predicat
  ⇒ (7 11)
 </code></pre>
 
-<p><code>(iset-remove! </code><em>predicate iset</em><code>)</code></p>
+<p><code>(iset-remove! </code><em>predicate</em> <em>iset</em><code>)</code></p>
 
 <p>A linear update procedure that returns a iset containing just the elements of <em>iset</em> that do not satisfy <em>predicate</em>.</p>
 
-<p><code>(iset-partition </code><em>predicate iset</em><code>)</code></p>
+<p><code>(iset-partition </code><em>predicate</em> <em>iset</em><code>)</code></p>
 
 <p>Returns two values: a newly allocated iset that contains just the elements of <em>iset</em> that satisfy <em>predicate</em> and another newly allocated iset that contains just the elements of <em>iset</em> that do not satisfy <em>predicate</em>.</p>
 
@@ -403,7 +403,7 @@ Returns <code>#t</code> if every element of <em>iset</em> satisfies <em>predicat
  ⇒ ((2 3 5) (7 11))
 </code></pre>
 
-<p><code>(iset-partition! </code><em>predicate iset</em><code>)</code></p>
+<p><code>(iset-partition! </code><em>predicate</em> <em>iset</em><code>)</code></p>
 
 <p>A linear update procedure that returns two isets containing the elements of <em>iset</em> that do and do not, respectively, not satisfy <em>predicate</em>.</p>
 
@@ -427,7 +427,7 @@ Returns a newly allocated iset, created as if by <code>iset</code>, that contain
 <pre class="example"><code>(list-&gt;iset '(-3 -1 0 2)) = (iset -3 -1 0 2)
 </code></pre>
 
-<p><code>(list-&gt;iset! </code><em>iset list</em><code>)</code></p><p>
+<p><code>(list-&gt;iset! </code><em>iset</em> <em>list</em><code>)</code></p><p>
 
 Returns a iset that contains the elements of both <em>iset</em> and <em>list</em>.  Duplicate elements are omitted.  <code>list-&gt;iset!</code> may mutate <em>iset</em> rather than allocating a new iset.</p>
 
@@ -443,31 +443,31 @@ Returns a iset that contains the elements of both <em>iset</em> and <em>list</em
   the trichotomy law.
 </p>
 
-<p><code>(iset=? </code><em>iset<sub>1</sub> iset<sub>2</sub> iset<sub>3</sub></em> ...<code>)</code>
+<p><code>(iset=? </code><em>iset<sub>1</sub></em> <em>iset<sub>2</sub></em> <em>iset<sub>3</sub></em> ...<code>)</code>
 
 </p><p>
 
 Returns <code>#t</code> if each <em>iset</em> contains the same elements.
 
-</p><p><code>(iset&lt;? </code><em>iset<sub>1</sub> iset<sub>2</sub> iset<sub>3</sub></em> ...<code>)</code>
+</p><p><code>(iset&lt;? </code><em>iset<sub>1</sub></em> <em>iset<sub>2</sub></em> <em>iset<sub>3</sub></em> ...<code>)</code>
 
 </p><p>
 
 Returns <code>#t</code> if each <em>iset</em> other than the last is a proper subset of the following <em>iset</em>, and <code>#f</code> otherwise.
 
-</p><p><code>(iset&gt;? </code><em>iset<sub>1</sub> iset<sub>2</sub> iset<sub>3</sub></em> ...<code>)</code>
+</p><p><code>(iset&gt;? </code><em>iset<sub>1</sub></em> <em>iset<sub>2</sub></em> <em>iset<sub>3</sub></em> ...<code>)</code>
 
 </p><p>
 
 Returns <code>#t</code> if each <em>iset</em> other than the last is a proper superset of the following <em>iset</em>, and <code>#f</code> otherwise.
 
-</p><p><code>(iset&lt;=? </code><em>iset<sub>1</sub> iset<sub>2</sub> iset<sub>3</sub></em> ...<code>)</code>
+</p><p><code>(iset&lt;=? </code><em>iset<sub>1</sub></em> <em>iset<sub>2</sub></em> <em>iset<sub>3</sub></em> ...<code>)</code>
 
 </p><p>
 
 Returns <code>#t</code> if each <em>iset</em> other than the last is a subset of the following <em>iset</em>, and <code>#f</code> otherwise.
 
-</p><p><code>(iset&gt;=? </code><em>iset<sub>1</sub> iset<sub>2</sub> iset<sub>3</sub></em> ...<code>)</code>
+</p><p><code>(iset&gt;=? </code><em>iset<sub>1</sub></em> <em>iset<sub>2</sub></em> <em>iset<sub>3</sub></em></em> <em>...<code>)</code>
 
 </p><p>
 
@@ -480,13 +480,13 @@ Returns <code>#t</code> if each <em>iset</em> other than the last is a superset 
 (iset&gt;=? (iset 3 0 1) (iset 0 1) (iset 0 1)) ⇒ #t
 </code></pre>
 
-<h3 id="Settheoryoperations">Set theory operations</h3><p><code>(iset-union </code><em>iset<sub>1</sub> iset<sub>2</sub> iset<sub>3</sub></em> ...<code>)</code>
+<h3 id="Settheoryoperations">Set theory operations</h3><p><code>(iset-union </code><em>iset<sub>1</sub></em> <em>iset<sub>2</sub></em> <em>iset<sub>3</sub></em> ...<code>)</code>
 
-</p><p><code>(iset-intersection </code><em>iset<sub>1</sub> iset<sub>2</sub> iset<sub>3</sub></em> ...<code>)</code>
+</p><p><code>(iset-intersection </code><em>iset<sub>1</sub></em> <em>iset<sub>2</sub></em> <em>iset<sub>3</sub></em> ...<code>)</code>
 
-</p><p><code>(iset-difference </code><em>iset<sub>1</sub> iset<sub>2</sub> iset<sub>3</sub></em> ...<code>)</code>
+</p><p><code>(iset-difference </code><em>iset<sub>1</sub></em> <em>iset<sub>2</sub></em> <em>iset<sub>3</sub></em> ...<code>)</code>
 
-</p><p><code>(iset-xor </code><em>iset<sub>1</sub> iset<sub>2</sub></em><code>)</code></p><p>
+</p><p><code>(iset-xor </code><em>iset<sub>1</sub></em> <em>iset<sub>2</sub></em><code>)</code></p><p>
 
 Return a newly allocated iset that is the union, intersection, asymmetric difference, or symmetric difference of the <em>isets</em>.  Asymmetric difference is extended to more than two isets by taking the difference between the first iset and the union of the others.  Symmetric difference is not extended beyond two isets.  Elements in the result iset are drawn from the first iset in which they appear.</p>
 
@@ -496,21 +496,21 @@ Return a newly allocated iset that is the union, intersection, asymmetric differ
 (iset-&gt;list (iset-xor (iset 0 1 3) (iset 0 2 4))) ⇒ (1 2 3 4)
 </code></pre>
 
-<p><code>(iset-union! </code><em>iset<sub>1</sub> iset<sub>2</sub> iset<sub>3</sub></em> ...<code>)</code>
+<p><code>(iset-union! </code><em>iset<sub>1</sub></em> <em>iset<sub>2</sub></em> <em>iset<sub>3</sub></em> ...<code>)</code>
 
-</p><p><code>(iset-intersection! </code><em>iset<sub>1</sub> iset<sub>2</sub> iset<sub>3</sub></em> ...<code>)</code>
+</p><p><code>(iset-intersection! </code><em>iset<sub>1</sub></em> <em>iset<sub>2</sub></em> <em>iset<sub>3</sub></em> ...<code>)</code>
 
-</p><p><code>(iset-difference! </code><em>iset<sub>1</sub> iset<sub>2</sub> iset<sub>3</sub></em> ...<code>)</code>
+</p><p><code>(iset-difference! </code><em>iset<sub>1</sub></em> <em>iset<sub>2</sub></em> <em>iset<sub>3</sub></em> ...<code>)</code>
 
-</p><p><code>(iset-xor! </code><em>iset<sub>1</sub> iset<sub>2</sub></em><code>)</code></p>
+</p><p><code>(iset-xor! </code><em>iset<sub>1</sub></em> <em>iset<sub>2</sub></em><code>)</code></p>
 
-<p>Linear update procedures returning a iset that is the union, intersection, asymmetric difference, or symmetric difference of the <em>isets</em>.  Asymmetric difference is extended to more than two isets by taking the difference between the first iset and the union of the others.  Symmetric difference is not extended beyond two isets.  Elements in the result iset are drawn from the first iset in which they appear.</p>
+<p>Linear update procedures returning an <em>iset</em> that is the union, intersection, asymmetric difference, or symmetric difference of the <em>iset</em>s.  Asymmetric difference is extended to more than two <em>iset</em>s by taking the difference between the first <em>iset</em> and the union of the others.  Symmetric difference is not extended beyond two <em>iset</em>s.  Elements in the result <em>iset</em> are drawn from the first <em>iset</em> in which they appear.</p>
 
 <h3 id="Intervalsandranges">Intervals and ranges</h3><p>
-</p><p><code>(iset-open-interval </code><em>iset low high</em><code>)</code>
-</p><p><code>(iset-closed-interval </code><em>iset low high</em><code>)</code>
-</p><p><code>(iset-open-closed-interval </code><em>iset low high</em><code>)</code>
-</p><p><code>(iset-closed-open-interval </code><em>iset low high</em><code>)</code>
+</p><p><code>(iset-open-interval </code><em>iset</em> <em>low</em> <em>high</em><code>)</code>
+</p><p><code>(iset-closed-interval </code><em>iset</em> <em>low</em> <em>high</em><code>)</code>
+</p><p><code>(iset-open-closed-interval </code><em>iset</em> <em>low</em> <em>high</em><code>)</code>
+</p><p><code>(iset-closed-open-interval </code><em>iset</em> <em>low</em> <em>high</em><code>)</code>
 <p>
 
 Procedures that return a subset of <em>iset</em> contained in the interval from <em>low</em>
@@ -523,11 +523,11 @@ closed below.</p>
 (iset-&gt;list (iset-closed-open-interval (iset 2 3 5 7 11) 2 7)) ⇒ (2 3 5)
 </code></pre>
 
-<p><code>(isubset= </code><em>iset k</em><code>)</code>
-</p><p><code>(isubset&lt; </code><em>iset k</em><code>)</code>
-</p><p><code>(isubset&lt;= </code><em>iset k</em><code>)</code>
-</p><p><code>(isubset&gt; </code><em>iset k</em><code>)</code>
-</p><p><code>(isubset&gt;= </code><em>iset k</em><code>)</code>
+<p><code>(isubset= </code><em>iset</em> <em>k</em><code>)</code>
+</p><p><code>(isubset&lt; </code><em>iset</em> <em>k</em><code>)</code>
+</p><p><code>(isubset&lt;= </code><em>iset</em> <em>k</em><code>)</code>
+</p><p><code>(isubset&gt; </code><em>iset</em> <em>k</em><code>)</code>
+</p><p><code>(isubset&gt;= </code><em>iset</em> <em>k</em><code>)</code>
 <p>
 
 Procedures that return an integer set containing the elements of <em>iset</em> that are equal
