@@ -46,7 +46,7 @@ implementation-specified bounds.)</p>
 <h2>Rationale</h2>
 
 <p>While it is perfectly practical to store integers in
- <a href="https://srfi.schemers.org/srfi-113/srfi-113.html">SRFI-113 sets</a>,
+ <a href="https://srfi.schemers.org/srfi-113/srfi-113.html">SRFI-113</a> sets,
 other algorithms can be used to represent sets of exact integers.
 This SRFI is almost a drop-in replacement for SRFI 113, except that
 <code>set</code> is replaced by <code>iset</code>
@@ -315,7 +315,7 @@ Returns the number of elements of <em>iset</em> that satisfy <em>predicate</em> 
 
 <p><code>(iset-any? </code><em>predicate</em> <em>iset</em><code>)</code></p><p>
 
-Returns <code>#t</code> if any element of <em>iset</em> satisfies <em>predicate</em>, or <code>#f</code> otherwise.  Note that this differs from the SRFI 1 analogue because it does not return an element of the iset.</p>
+Returns <code>#t</code> if any element of <em>iset</em> satisfies <em>predicate</em>, or <code>#f</code> otherwise.  Note that this differs from the <a href="https://srfi.schemers.org/srfi-1/srfi-1.html">SRFI 1</a> analogue because it does not return an element of the iset.</p>
 
 <pre class="example"><code>(iset-any? positive? (iset -2 -1 1 2)) ⇒ #t
 (iset-any? zero? (iset -2 -1 1 2)) ⇒ #f
