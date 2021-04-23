@@ -188,7 +188,7 @@ containing the sequence</p>
 
 <p><code>(iset-member </code><em>iset</em> <em>element</em> <em>default</em><code>)</code></p>
 
-<p>Returns the element of <em>iset</em> that is equal, in the sense of <em>iset's</em> equality predicate, to <em>element</em>.  If <em>element</em> is not a member of <em>iset</em>, <em>default</em> is returned.</p>
+<p>Returns the element of <em>iset</em> that is equal to <em>element</em>.  If <em>element</em> is not a member of <em>iset</em>, <em>default</em> is returned.</p>
 
 <pre class="example"><code>(iset-member (iset 2 3 5 7 11) 7 #f) ⇒ 7
 (iset-member (iset 2 3 5 7 11) 4 'failure) ⇒ failure
