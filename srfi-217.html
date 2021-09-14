@@ -23,6 +23,10 @@
   <li>Draft #3 published: 2021-02-03</li>
   <li>Draft #4 published: 2021-02-08</li>
   <li>Finalized: 2021-02-15</li>
+  <li>Revised to fix errata:
+      <ul>
+        <li>2021-09-14 (Not all results of <a href="#iset-search"><code>iset-search</code></a>
+          are newly allocated.)</li></ul></li>
 </ul>
 
 <h2>Abstract</h2>
@@ -257,7 +261,7 @@ of allocating a new iset.</p>
   ⇒ (11 (2 3 5 7))
 </code></pre>
 
-<p><code>(iset-search </code><em>iset</em> <em>element</em> <em>failure</em> <em>success</em><code>)</code></p>
+<p id="iset-search"><code>(iset-search </code><em>iset</em> <em>element</em> <em>failure</em> <em>success</em><code>)</code></p>
 
 <p>The <em>iset</em> is searched from lowest to highest value for <em>element</em>.  If it is not found, then the <em>failure</em> procedure is tail-called with two continuation arguments, <em>insert</em> and <em>ignore</em>, and is expected to tail-call one of them.  If <em>element</em> is found, then the <em>success</em> procedure is tail-called with the matching element of <em>iset</em> and two continuations, <em>update</em> and <em>remove</em>, and is expected to tail-call one of them.</p>
 
@@ -270,7 +274,7 @@ of allocating a new iset.</p>
 <li><p>Invoking <code>(</code><em>remove</em> <em>obj</em><code>)</code> causes the matching element of <em>iset</em> to be removed from it.</p></li>
 </ul>
 
-<p>In all cases, two values are returned: a newly allocated iset and <em>obj</em>.</p>
+<p>In all cases, two values are returned: an iset and <em>obj</em>.</p>
 
 <p><code>(iset-search! </code><em>iset</em> <em>element</em> <em>failure</em> <em>success</em><code>)</code></p>
 
