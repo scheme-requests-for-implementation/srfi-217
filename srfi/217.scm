@@ -234,7 +234,7 @@
   (call-with-current-continuation
    (lambda (return)
      (iset-fold (lambda (n _)
-                  (or (pred n) (return #f)))
+                  (if (pred n) #t (return #f)))
                 #t
                 set))))
 
